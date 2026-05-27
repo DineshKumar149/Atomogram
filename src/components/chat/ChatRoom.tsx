@@ -10,7 +10,7 @@ import {
   Mic, Square, Send, Paperclip, Smile, Reply, Trash2, X, Users, Check, 
   CheckCheck, Info, Phone, Video, Music, Search, Ban, Edit2, BellOff, Bell,
   PhoneIncoming, PhoneOff, Image as ImageIcon, Volume2, MicOff, Grip, MoreHorizontal,
-  PhoneMissed, Clock, Eye, EyeOff
+  PhoneMissed, Clock, Eye, EyeOff, ArrowLeft
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -62,7 +62,7 @@ const MOCK_STICKERS = [
   { id: "s8", url: "https://media.giphy.com/media/3o6UB5RrlQuMfZp82Y/giphy.gif", tags: ["sleep", "tired", "bed"] },
 ];
 
-const ChatRoom = ({ conversationId }: { conversationId: string }) => {
+const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?: () => void }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -1115,8 +1115,13 @@ const ChatRoom = ({ conversationId }: { conversationId: string }) => {
         )
       )}
 
-      <div className="flex items-center gap-4 py-4 px-6 border-b border-border/40 bg-background z-10 shadow-sm">
-        <div className="flex-1 min-w-0 flex items-center gap-4">
+      <div className="flex items-center gap-3 py-3 px-4 border-b border-border/40 bg-background z-10 shrink-0 shadow-sm">
+        {onBack && (
+          <button className="md:hidden shrink-0 text-foreground hover:bg-secondary p-1.5 -ml-2 rounded-full transition-colors" onClick={onBack}>
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+        )}
+        <div className="flex-1 min-w-0 flex items-center gap-3">
           <div className="relative">
             <Avatar className="w-[46px] h-[46px] border border-border/50 shadow-sm cursor-pointer hover:opacity-90 transition-opacity" onClick={() => {
               if (conv?.type !== "group") {
@@ -1533,7 +1538,7 @@ const ChatRoom = ({ conversationId }: { conversationId: string }) => {
       })()}
       </div>
 
-      <div className="bg-background border-t border-border/40 flex flex-col z-10 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+      <div className="bg-background border-t border-border/40 flex flex-col z-10 shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
         {pendingMedia.length > 0 && (
           <div className="flex items-center gap-3 p-3 overflow-x-auto border-b border-border/40 bg-secondary/30">
             {pendingMedia.map((media, idx) => (

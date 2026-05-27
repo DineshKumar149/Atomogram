@@ -583,12 +583,17 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
               <div
                 ref={carouselRef}
                 onScroll={(e) => {
-                  const el = e.currentTarget;
-                  const idx = Math.round(el.scrollLeft / el.offsetWidth);
-                  if (idx !== currentImageIndex) setCurrentImageIndex(idx);
+                  const target = e.currentTarget;
+                  if (target.dataset.scrollTimeout) {
+                    window.clearTimeout(Number(target.dataset.scrollTimeout));
+                  }
+                  target.dataset.scrollTimeout = String(window.setTimeout(() => {
+                    const idx = Math.round(target.scrollLeft / target.offsetWidth);
+                    if (idx !== currentImageIndex) setCurrentImageIndex(idx);
+                  }, 50));
                 }}
-                className="flex overflow-x-auto snap-x snap-mandatory w-full"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                className="flex overflow-x-auto snap-x snap-mandatory w-full touch-pan-x overscroll-x-contain"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
               >
                 {imageList.map((src, idx) => (
                   <div

@@ -41,7 +41,7 @@ const Chat = () => {
   }, [searchParams]);
 
   return (
-    <div className="h-screen bg-background flex flex-col">
+    <div className="h-[100dvh] bg-background flex flex-col">
       <div className="flex-1 min-h-0 max-w-6xl w-full mx-auto flex overflow-hidden">
         <aside
           className={`${
@@ -58,17 +58,7 @@ const Chat = () => {
         >
           {activeConv ? (
             <>
-              <div className="md:hidden p-2 border-b border-border/50">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setActiveConv(null)}
-                  className="gap-2"
-                >
-                  <ArrowLeft className="w-4 h-4" /> Back
-                </Button>
-              </div>
-              <ChatRoom conversationId={activeConv} />
+              <ChatRoom conversationId={activeConv} onBack={() => setActiveConv(null)} />
             </>
           ) : (
             <div className="flex-1 hidden md:flex flex-col items-center justify-center text-muted-foreground gap-4">
