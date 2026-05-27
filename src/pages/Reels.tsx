@@ -464,7 +464,7 @@ const ReelItem = ({
     : "April 2021";
 
   return (
-    <div className={`w-full h-[100dvh] md:h-full flex items-center justify-center ${isDark ? "bg-[#000]" : "bg-[#fafafa]"} relative select-none`}>
+    <div className={`w-full h-[100dvh] md:h-full flex items-center justify-center ${isDark ? "bg-[#000]" : "bg-[#fafafa]"} relative select-none content-vis-auto`}>
       {showAllLikes && (
         <AllLikesModal postId={reel.id} onClose={() => setShowAllLikes(false)} />
       )}

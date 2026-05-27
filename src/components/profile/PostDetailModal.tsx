@@ -112,6 +112,7 @@ const PostDetailModal = ({ post, authorProfile, onClose }: PostDetailModalProps)
   const [likeRecordId, setLikeRecordId] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
+  const [showMobileComments, setShowMobileComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAllLikes, setShowAllLikes] = useState(false);
@@ -343,21 +344,28 @@ const PostDetailModal = ({ post, authorProfile, onClose }: PostDetailModalProps)
         <AllLikesModal postId={post.id} onClose={() => setShowAllLikes(false)} />
       )}
 
-      <div
-        className="fixed inset-0 z-[250] flex items-center justify-center p-0 md:p-4"
+      <div 
+        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={onClose}
       >
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-[250] p-2 bg-black/50 hover:bg-black/80 rounded-full text-white transition-colors cursor-pointer hidden md:flex"
+        >
+          <X className="w-6 h-6" />
+        </button>
 
-        <div
-          className="relative z-10 w-full md:max-w-4xl h-[100dvh] md:h-[min(650px,92vh)] flex flex-col md:flex-row rounded-none md:rounded-[28px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-250 bg-white dark:bg-black"
+        <div 
+          className="w-full md:w-[85vw] md:max-w-[1200px] h-[100dvh] md:h-[85vh] md:max-h-[850px] bg-black md:rounded-xl overflow-hidden flex flex-col md:flex-row relative"
           onClick={(e) => e.stopPropagation()}
         >
+          
+          {/* Mobile Back Button */}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors text-white"
+            className="absolute top-4 left-4 z-[60] p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors cursor-pointer md:hidden"
           >
-            <X className="w-4 h-4" />
+            <ChevronLeft className="w-6 h-6" />
           </button>
 
           <div className="w-full md:w-1/2 h-[70%] md:h-full bg-black shrink-0 relative flex items-center justify-center overflow-hidden">
@@ -431,9 +439,33 @@ const PostDetailModal = ({ post, authorProfile, onClose }: PostDetailModalProps)
                 )
               )
             )}
+
+            {/* MOBILE ONLY: Action Buttons Overlay (bottom of media) */}
+            <div className="absolute bottom-6 right-2 z-[60] flex flex-col items-center gap-4 text-white md:hidden pointer-events-auto">
+              <div className="flex flex-col items-center gap-0.5">
+                <button onClick={handleLike} className="p-2.5 rounded-full hover:bg-black/20 transition-all active:scale-90 cursor-pointer drop-shadow-md">
+                  <Heart className={`w-7 h-7 transition-colors ${liked ? "fill-red-500 text-red-500" : "text-white"}`} />
+                </button>
+                {canSeeLikes && <span className="text-[11px] font-bold text-white drop-shadow-md">{likesCount > 0 ? likesCount : "Likes"}</span>}
+              </div>
+
+              {!commentsDisabled && (
+                <div className="flex flex-col items-center gap-0.5">
+                  <button onClick={() => setShowMobileComments(true)} className="p-2.5 rounded-full hover:bg-black/20 transition-all active:scale-90 cursor-pointer drop-shadow-md">
+                    <MessageCircle className="w-7 h-7 text-white" style={{ transform: "scaleX(-1)" }} />
+                  </button>
+                  <span className="text-[11px] font-bold text-white drop-shadow-md">{comments.length}</span>
+                </div>
+              )}
+
+              <button onClick={handleSave} className="p-2.5 rounded-full hover:bg-black/20 transition-all active:scale-90 cursor-pointer drop-shadow-md mt-2">
+                <Bookmark className={`w-7 h-7 ${isSaved ? "fill-white text-white" : "text-white"}`} />
+              </button>
+            </div>
           </div>
 
-          <div className="w-full md:w-1/2 h-[30%] md:h-full bg-white dark:bg-black text-black dark:text-white flex flex-col border-t md:border-t-0 md:border-l border-border/40 overflow-hidden">
+          {/* RIGHT SIDE: Comments & Details (Desktop Only) */}
+          <div className="hidden md:flex w-full md:w-1/2 h-full bg-white dark:bg-black text-black dark:text-white flex-col border-l border-border/40 overflow-hidden">
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border/40 shrink-0 bg-white dark:bg-black">
               <Avatar
                 className="w-9 h-9 ring-2 ring-background cursor-pointer"
@@ -646,6 +678,103 @@ const PostDetailModal = ({ post, authorProfile, onClose }: PostDetailModalProps)
           </div>
         </div>
       </div>
+
+      {/* MOBILE ONLY: Centered Rectangular Comment Modal */}
+      {showMobileComments && (
+        <div 
+          className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 md:hidden"
+          onClick={() => setShowMobileComments(false)}
+        >
+          <div 
+            className="w-[90vw] max-w-[400px] h-[60vh] max-h-[500px] bg-background border border-border/50 rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200 relative overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-border/50 bg-background/95 backdrop-blur-sm shrink-0">
+              <h3 className="text-lg font-bold">Comments</h3>
+              <button 
+                onClick={() => setShowMobileComments(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-secondary transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
+              {post.caption && post.caption.trim() && (
+                <div className="flex gap-3 items-start pb-4 border-b border-border/20">
+                  <Avatar className="w-8 h-8 shrink-0">
+                    <AvatarImage src={authorAvatar} className="object-cover" />
+                    <AvatarFallback className="bg-secondary text-xs">{authorInitials}</AvatarFallback>
+                  </Avatar>
+                  <p className="text-sm">
+                    <span className="font-bold mr-2">{displayName}</span>
+                    {post.caption}
+                  </p>
+                </div>
+              )}
+
+              {comments.length === 0 ? (
+                <div className="h-32 flex items-center justify-center text-muted-foreground text-sm">
+                  No comments yet. Be the first!
+                </div>
+              ) : (
+                comments.map((comment) => (
+                  <div key={comment.id} className="flex gap-3 items-start group">
+                    <Avatar className="w-8 h-8 shrink-0">
+                      <AvatarImage src={comment.userAvatar} className="object-cover" />
+                      <AvatarFallback className="bg-secondary text-xs">{comment.userName.slice(0,2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm">
+                        <span className="font-bold mr-2">{comment.userName}</span>
+                        {comment.text}
+                      </p>
+                      <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground">
+                        <span>{formatTime(comment.createdAt)}</span>
+                        <button 
+                          onClick={() => {
+                            setCommentText(`@${comment.userName} `);
+                            commentInputRef.current?.focus();
+                          }}
+                          className="font-bold hover:text-foreground"
+                        >
+                          Reply
+                        </button>
+                        {(isAdmin || user?.id === comment.userId) && (
+                          <button onClick={() => handleDeleteComment(comment.id)} className="text-red-500 hover:text-red-600">
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={commentsEndRef} />
+            </div>
+
+            <div className="p-3 border-t border-border/50 bg-background/95 backdrop-blur-sm shrink-0">
+              <div className="flex items-center gap-2">
+                <Input
+                  ref={commentInputRef}
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleAddComment()}
+                  placeholder="Add a comment..."
+                  className="flex-1 bg-secondary/50 border-none h-10 rounded-xl px-4 text-sm"
+                />
+                <button
+                  onClick={handleAddComment}
+                  disabled={!commentText.trim()}
+                  className="w-10 h-10 flex items-center justify-center bg-primary text-primary-foreground rounded-xl disabled:opacity-50"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

@@ -148,13 +148,12 @@ const Explore = () => {
         {posts.map((post, i) => {
           // Dynamic row span for variety
           const isVideo = post.media_type === "video";
-          const spanTwoRows = (i % 7 === 0) || (isVideo && i % 3 === 0);
           const thumb = getThumb(post);
 
           return (
             <div
               key={post.id}
-              className={`relative cursor-pointer overflow-hidden group bg-background border-none md:border md:border-border rounded-none md:rounded-2xl transition-all duration-500 bw-hover-gradient ${
+              className={`relative cursor-pointer overflow-hidden group bg-background border-none md:border md:border-border rounded-none md:rounded-2xl transition-all duration-500 bw-hover-gradient content-vis-auto ${
                 spanTwoRows ? "row-span-2" : "row-span-1"
               }`}
               onClick={() => setSelectedPost(post)}
