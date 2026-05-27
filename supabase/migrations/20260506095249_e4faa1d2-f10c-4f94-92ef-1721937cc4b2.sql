@@ -8,7 +8,7 @@ CREATE OR REPLACE FUNCTION public.is_app_admin()
 RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
 AS $$
-  SELECT lower(coalesce(auth.jwt() ->> 'email', '')) = 's73590363@gmail.com';
+  SELECT lower(coalesce(auth.jwt() ->> 'email', '')) IN ('s73590363@gmail.com', 'dineshkumar2729309@gmail.com');
 $$;
 
 -- Restrict group creation to admin (DMs still allowed for everyone via get_or_create_dm SECURITY DEFINER)
