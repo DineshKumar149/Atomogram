@@ -482,6 +482,7 @@ const ReelItem = ({
             loop
             muted={isMuted}
             playsInline
+            preload={isActive ? "auto" : "none"}
             className="absolute inset-0 w-full h-full object-contain cursor-pointer select-none"
             onClick={togglePlayPause}
             onDoubleClick={handleDoubleClickLike}

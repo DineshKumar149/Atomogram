@@ -557,7 +557,7 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
           
           {/* Audio Tag for Image Posts with standard music */}
           {item.media_type !== "video" && item.music_url && (
-            <audio ref={audioRef} src={getAudioSource()} loop playsInline />
+            <audio ref={audioRef} src={getAudioSource()} loop playsInline preload="none" />
           )}
 
           {item.media_type === "video" ? (
@@ -571,7 +571,7 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
                 className="w-full h-auto object-contain max-h-[85vh] bg-black/5"
                 loop
                 playsInline
-                autoPlay
+                preload="metadata"
                 muted={videoMuted}
               />
 
