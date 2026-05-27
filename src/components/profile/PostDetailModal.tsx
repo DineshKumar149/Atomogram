@@ -368,7 +368,7 @@ const PostDetailModal = ({ post, authorProfile, onClose }: PostDetailModalProps)
             <ChevronLeft className="w-6 h-6" />
           </button>
 
-          <div className="w-full md:w-1/2 h-[70%] md:h-full bg-black shrink-0 relative flex items-center justify-center overflow-hidden">
+          <div className="w-full md:w-1/2 h-full bg-black shrink-0 relative flex items-center justify-center overflow-hidden">
             {imageList.length > 1 ? (
               /* Carousel with left/right navigation */
               <div className="w-full h-full relative flex items-center justify-center">
