@@ -723,7 +723,7 @@ const Profile = () => {
                 </div>
 
                 {/* Mobile Stats */}
-                <div className="flex flex-1 justify-around ml-4 items-center">
+                <div className="flex flex-1 justify-around ml-4 items-center mt-6">
                   <div className="flex flex-col items-center">
                     <span className="font-bold text-foreground text-lg">{postsCount}</span>
                     <span className="text-foreground/90 text-[13px]">posts</span>

@@ -53,14 +53,14 @@ const TopNavMobile = () => {
     <>
       <nav className="fixed top-0 left-0 right-0 z-[100] md:hidden"
         style={{
-          background: "var(--mob-nav-bg, hsla(0,0%,100%,0.97))",
-          backdropFilter: "blur(20px) saturate(200%)",
-          WebkitBackdropFilter: "blur(20px) saturate(200%)",
-          borderBottom: "1px solid hsla(0,0%,0%,0.08)",
+          background: "var(--mob-nav-bg, hsla(0,0%,100%,0.6))",
+          backdropFilter: "blur(24px) saturate(200%)",
+          WebkitBackdropFilter: "blur(24px) saturate(200%)",
+          borderBottom: "1px solid hsla(0,0%,0%,0.05)",
           paddingTop: "env(safe-area-inset-top, 0px)",
         }}
       >
-        <div className="flex items-center justify-between px-4 h-[52px]">
+        <div className="flex items-center justify-between px-4 h-[44px]">
           {/* Left: Logo */}
           <Link 
             to="/gallery" 
@@ -73,9 +73,9 @@ const TopNavMobile = () => {
             className="flex items-center"
           >
             <span style={{
-              fontSize: 26, fontWeight: 700,
-              fontFamily: "'Billabong','Dancing Script',cursive,sans-serif", letterSpacing: "0.2px",
-            }} className="text-foreground mt-1">
+              fontSize: 22, fontWeight: 700,
+              fontFamily: "'Billabong','Dancing Script',cursive,sans-serif", letterSpacing: "0.5px",
+            }} className="text-foreground mt-0.5">
               Atome
             </span>
           </Link>
@@ -87,7 +87,7 @@ const TopNavMobile = () => {
               onClick={openNotifications}
               className="relative transition-transform active:scale-90"
             >
-              <Heart className="w-6 h-6 text-foreground" strokeWidth={1.8} />
+              <Heart className="w-[22px] h-[22px] text-foreground" strokeWidth={1.8} />
               {unreadNotifsCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-background">
                   {unreadNotifsCount > 9 ? "9+" : unreadNotifsCount}
@@ -100,7 +100,7 @@ const TopNavMobile = () => {
               onClick={() => navigate("/chat")}
               className="relative transition-transform active:scale-90"
             >
-              <Send className="w-6 h-6 text-foreground transform -rotate-12" strokeWidth={1.8} />
+              <Send className="w-[22px] h-[22px] text-foreground transform -rotate-12" strokeWidth={1.8} />
               {unreadTotal > 0 && (
                 <span className="absolute -top-1 -right-1.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-background">
                   {unreadTotal > 9 ? "9+" : unreadTotal}
