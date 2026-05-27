@@ -149,6 +149,7 @@ const Explore = () => {
           // Dynamic row span for variety
           const isVideo = post.media_type === "video";
           const thumb = getThumb(post);
+          const spanTwoRows = false;
 
           return (
             <div
