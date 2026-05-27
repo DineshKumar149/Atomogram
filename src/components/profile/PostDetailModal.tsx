@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { X, Heart, Bookmark, ChevronLeft, ChevronRight, Send, Music, Trash2, Volume2, VolumeX } from "lucide-react";
+import { X, Heart, Bookmark, ChevronLeft, ChevronRight, Send, Music, Trash2, Volume2, VolumeX, MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
