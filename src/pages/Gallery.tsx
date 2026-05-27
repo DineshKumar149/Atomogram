@@ -115,7 +115,7 @@ const Gallery = () => {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[100dvh] bg-background">
       <div className="max-w-[1000px] mx-auto flex gap-16 pt-1 md:pt-8 px-0 md:px-4">
         
         {/* Main Feed Column */}

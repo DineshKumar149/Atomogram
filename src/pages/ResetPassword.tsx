@@ -56,7 +56,7 @@ const ResetPassword = () => {
 
   if (!validSession && !success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4">
         <div className="w-full max-w-sm glass-card rounded-2xl p-6 text-center space-y-4">
           <h1 className="text-3xl font-display font-bold text-foreground">Atome</h1>
           <h2 className="text-lg font-display font-semibold text-foreground">Invalid or expired link</h2>
@@ -70,7 +70,7 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-display font-bold text-foreground">Atome</h1>

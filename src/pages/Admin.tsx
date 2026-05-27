@@ -121,7 +121,7 @@ const Admin = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-[100dvh] bg-background flex flex-col">
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
         <h1 className="text-2xl font-display font-bold text-foreground mb-6">Admin Dashboard</h1>
 

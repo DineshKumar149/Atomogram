@@ -62,6 +62,18 @@ const ReelItem = ({
   // Comments state
   const [comments, setComments] = useState<any[]>([]);
   const [commentsOpen, setCommentsOpen] = useState(false);
+
+  useEffect(() => {
+    if (commentsOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [commentsOpen]);
+
   const [newComment, setNewComment] = useState("");
   const [postingComment, setPostingComment] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -642,25 +654,31 @@ const ReelItem = ({
         </div>
         </div>
 
-        {/* 2. Floating Comments Panel — overlaid to the right of the video card */}
+        {/* 2. Standardized Floating Comments Modal */}
         {commentsOpen && (
-          <div className={`absolute inset-x-0 bottom-0 top-auto h-[70%] sm:h-full sm:inset-auto sm:left-[calc(50%+260px)] md:left-[calc(50%+315px)] w-full sm:w-[300px] md:w-[340px] ${isDark ? "bg-[#1c1c1e] text-white border-white/10" : "bg-white text-black border-neutral-200"} border rounded-t-2xl sm:rounded-2xl z-30 flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-right duration-250 text-left shadow-2xl`}>
-            {/* Header */}
-            <div className={`flex flex-col px-4 pt-4 pb-3 border-b ${isDark ? "border-white/10" : "border-neutral-200"}`}>
-              <div className="flex items-center justify-between">
+          <div 
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setCommentsOpen(false)}
+          >
+            <div 
+              className={`w-[90vw] max-w-[400px] h-[60vh] max-h-[500px] ${isDark ? "bg-[#1c1c1e] text-white border-white/10" : "bg-white text-black border-neutral-200"} border rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200 relative overflow-hidden text-left`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className={`flex justify-between items-center px-6 pb-4 pt-4 border-b ${isDark ? "border-white/10" : "border-neutral-200"}`}>
+                <div>
+                  <h3 className="text-lg font-bold">Comments</h3>
+                  <p className="text-[10px] opacity-60 font-medium">All thoughts on this memory</p>
+                </div>
                 <button
                   onClick={() => setCommentsOpen(false)}
                   className={`w-8 h-8 flex items-center justify-center rounded-full ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"} transition-colors cursor-pointer`}
                 >
-                  <X className={`w-4 h-4 ${isDark ? "text-white/80" : "text-neutral-600"}`} />
+                  <X className="w-4 h-4" />
                 </button>
-                <span className="font-bold text-sm">Comments</span>
-                <div className="w-8" /> {/* spacer */}
               </div>
-              <p className="text-[10px] text-muted-foreground font-medium mt-1 text-center">All thoughts on this memory</p>
-            </div>
 
-            {/* Comments List */}
+              {/* Comments List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4.5 scrollbar-thin">
               {comments.length === 0 ? (
                 <div className={`flex flex-col items-center justify-center h-full text-center ${isDark ? "text-white/40" : "text-neutral-400"}`}>
@@ -1088,7 +1106,7 @@ export default function Reels() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="h-screen w-full flex items-center justify-center bg-black">
+        <div className="h-[100dvh] w-full flex items-center justify-center bg-black">
           <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
         </div>
       </AppLayout>

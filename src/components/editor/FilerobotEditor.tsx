@@ -51,7 +51,7 @@ export default function FilerobotEditor({
   };
 
   return (
-    <div className="fixed inset-0 z-[700] bg-black flex flex-col w-screen h-screen overflow-hidden">
+    <div className="fixed inset-0 z-[700] bg-black flex flex-col w-screen h-[100dvh] overflow-hidden">
       {isProcessing && (
         <div className="absolute inset-0 z-[800] bg-black/80 flex flex-col items-center justify-center backdrop-blur-sm">
           <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />

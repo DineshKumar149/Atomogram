@@ -408,7 +408,7 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center justify-center min-h-[100dvh]">
         <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
       </div>
     );
@@ -416,7 +416,7 @@ const Profile = () => {
 
   if (isBlockedByTarget) {
     return (
-      <div className="flex-1 w-full min-h-screen relative font-sans pb-mobile-nav">
+      <div className="flex-1 w-full min-h-[100dvh] relative font-sans pb-mobile-nav">
         <div className="fixed inset-0 -z-10 bg-background" />
         <div className="max-w-lg mx-auto px-4 py-8">
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 mb-8 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
@@ -498,7 +498,7 @@ const Profile = () => {
   };
 
   return (
-    <div className="flex-1 w-full min-h-screen relative font-sans pb-mobile-nav">
+    <div className="flex-1 w-full min-h-[100dvh] relative font-sans pb-mobile-nav">
       <div className="fixed inset-0 -z-10 bg-background" />
 
       {showFollowingPopup && profileData && (
@@ -885,7 +885,7 @@ const Profile = () => {
           <button className="absolute top-4 right-4 p-2 text-white/80 hover:text-white" onClick={() => setShowFullAvatar(false)}>
             <X className="w-8 h-8" />
           </button>
-          <img src={displayAvatar} alt="Profile" className="max-w-full max-h-screen object-contain" onClick={(e) => e.stopPropagation()} />
+          <img src={displayAvatar} alt="Profile" className="max-w-full max-h-[100dvh] object-contain" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
 

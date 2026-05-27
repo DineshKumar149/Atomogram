@@ -81,7 +81,7 @@ const Signup = () => {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4 relative"
+      className="min-h-[100dvh] flex items-center justify-center p-4 relative"
       style={{
         backgroundImage: "url('/images/gradient-background.jpg')",
         backgroundSize: "cover",

@@ -645,7 +645,7 @@ const Settings = () => {
   ];
 
   return (
-    <div className="flex-1 w-full min-h-screen relative font-sans">
+    <div className="flex-1 w-full min-h-[100dvh] relative font-sans">
       {/* Background gradients */}
       <div className="fixed inset-0 -z-10 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
       <div className="fixed inset-0 -z-10 backdrop-blur-[1px]" />

@@ -22,7 +22,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   return (
     <>
-      <div className="flex min-h-screen bg-background">
+      <div className="flex min-h-[100dvh] bg-background">
         {/* Desktop Sidebar — fixed, handled internally */}
         <div className="hidden md:block shrink-0">
           <Sidebar onOpenCreate={() => setCreateModalOpen(true)} />

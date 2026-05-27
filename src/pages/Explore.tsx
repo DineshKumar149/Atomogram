@@ -206,7 +206,7 @@ const Explore = () => {
   };
 
   return (
-    <div className="flex-1 w-full min-h-screen bg-background">
+    <div className="flex-1 w-full min-h-[100dvh] bg-background">
       {selectedPost && (
         <PostDetailModal
           post={selectedPost}

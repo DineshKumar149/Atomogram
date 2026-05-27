@@ -153,7 +153,7 @@ export default function Activity() {
   };
 
   return (
-    <div className={`flex h-screen overflow-hidden ${isDark ? "bg-black text-white" : "bg-white text-black"}`}>
+    <div className={`flex h-[100dvh] overflow-hidden ${isDark ? "bg-black text-white" : "bg-white text-black"}`}>
       {/* LEFT PANEL */}
       <div style={{ width: 300, borderRight: isDark ? "1px solid #262626" : "1px solid #e5e5e5", flexShrink: 0, padding: "32px 0 0", display: "flex", flexDirection: "column" }}>
         <h2 style={{ fontSize: 22, fontWeight: 700, padding: "0 24px 24px", color: isDark ? "#fff" : "#000" }}>Your activity</h2>

@@ -397,6 +397,21 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
     }
   };
 
+  const handleShareClick = () => {
+    setIsShareOpen(true);
+  };
+
+  useEffect(() => {
+    if (showCommentsModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showCommentsModal]);
+
   const handleSave = async () => {
     if (!currentUser) return;
     const currentSaved = currentUser.user_metadata?.saved_posts || [];
@@ -787,19 +802,14 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
 
       {showCommentsModal && (
         <div 
-          className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => setShowCommentsModal(false)}
         >
           <div 
-            className="w-full md:max-w-md h-[70vh] md:h-[600px] md:max-h-[90vh] bg-background border border-border/50 md:rounded-[32px] rounded-t-[32px] shadow-2xl flex flex-col animate-in slide-in-from-bottom-full md:slide-in-from-bottom-4 md:zoom-in-95 duration-300 relative"
+            className="w-[90vw] max-w-[400px] h-[60vh] max-h-[500px] bg-background border border-border/50 rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200 relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Grabber for mobile */}
-            <div className="w-full flex justify-center pt-3 pb-1 md:hidden">
-              <div className="w-12 h-1.5 bg-muted rounded-full" />
-            </div>
-            
-            <div className="flex justify-between items-center px-6 pb-4 pt-2 md:pt-6 border-b border-border/40">
+            <div className="flex justify-between items-center px-6 pb-4 pt-4 border-b border-border/40">
               <div>
                 <h3 className="text-lg font-bold text-foreground dark:text-white">Comments</h3>
                 <p className="text-[10px] text-muted-foreground dark:text-white/60 font-medium">All thoughts on this memory</p>
