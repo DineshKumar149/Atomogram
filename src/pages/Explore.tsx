@@ -56,18 +56,55 @@ const Explore = () => {
   const fetchExplorePosts = useCallback(async () => {
     setLoading(true);
     try {
-      let queryBuilder = supabase
-        .from("posts")
-        .select("*")
-        .order("likes_count", { ascending: false })
-        .limit(45);
+      let postsData: any[] = [];
 
       if (debouncedQuery) {
-        queryBuilder = queryBuilder.ilike("caption", `%${debouncedQuery}%`);
+        // Find matching users
+        const { data: users } = await supabase
+          .from("profiles")
+          .select("user_id")
+          .or(`username.ilike.%${debouncedQuery}%,display_name.ilike.%${debouncedQuery}%`);
+          
+        const userIds = users?.map((u) => u.user_id) || [];
+        
+        // Find posts by caption
+        const { data: captionPosts, error: captionError } = await supabase
+          .from("posts")
+          .select("*")
+          .ilike("caption", `%${debouncedQuery}%`)
+          .order("likes_count", { ascending: false })
+          .limit(45);
+        if (captionError) throw captionError;
+          
+        // Find posts by authors
+        let authorPosts: any[] = [];
+        if (userIds.length > 0) {
+          const { data: uPosts, error: uError } = await supabase
+            .from("posts")
+            .select("*")
+            .in("user_id", userIds)
+            .order("likes_count", { ascending: false })
+            .limit(45);
+          if (uError) throw uError;
+          authorPosts = uPosts || [];
+        }
+        
+        // Merge and deduplicate
+        const allPosts = [...(captionPosts || []), ...authorPosts];
+        const uniquePosts = Array.from(new Map(allPosts.map((p) => [p.id, p])).values());
+        // Sort by likes
+        uniquePosts.sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0));
+        postsData = uniquePosts.slice(0, 45);
+      } else {
+        const { data: pData, error } = await supabase
+          .from("posts")
+          .select("*")
+          .order("likes_count", { ascending: false })
+          .limit(45);
+        if (error) throw error;
+        postsData = pData || [];
       }
 
-      const { data: postsData, error } = await queryBuilder;
-      if (error) throw error;
       if (!postsData || postsData.length === 0) {
         setPosts([]);
         return;

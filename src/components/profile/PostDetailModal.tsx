@@ -344,13 +344,13 @@ const PostDetailModal = ({ post, authorProfile, onClose }: PostDetailModalProps)
       )}
 
       <div
-        className="fixed inset-0 z-[250] flex items-center justify-center p-4"
+        className="fixed inset-0 z-[250] flex items-center justify-center p-0 md:p-4"
         onClick={onClose}
       >
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
         <div
-          className="relative z-10 w-full max-w-4xl h-[92vh] md:h-[min(650px,92vh)] flex flex-col md:flex-row rounded-[28px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-250 bg-white dark:bg-black"
+          className="relative z-10 w-full md:max-w-4xl h-[100dvh] md:h-[min(650px,92vh)] flex flex-col md:flex-row rounded-none md:rounded-[28px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-250 bg-white dark:bg-black"
           onClick={(e) => e.stopPropagation()}
         >
           <button
@@ -360,7 +360,7 @@ const PostDetailModal = ({ post, authorProfile, onClose }: PostDetailModalProps)
             <X className="w-4 h-4" />
           </button>
 
-          <div className="w-full md:w-1/2 h-[45%] md:h-full bg-black shrink-0 relative flex items-center justify-center overflow-hidden">
+          <div className="w-full md:w-1/2 h-[70%] md:h-full bg-black shrink-0 relative flex items-center justify-center overflow-hidden">
             {imageList.length > 1 ? (
               /* Carousel with left/right navigation */
               <div className="w-full h-full relative flex items-center justify-center">
@@ -433,7 +433,7 @@ const PostDetailModal = ({ post, authorProfile, onClose }: PostDetailModalProps)
             )}
           </div>
 
-          <div className="w-full md:w-1/2 h-[55%] md:h-full bg-white dark:bg-black text-black dark:text-white flex flex-col border-t md:border-t-0 md:border-l border-border/40 overflow-hidden">
+          <div className="w-full md:w-1/2 h-[30%] md:h-full bg-white dark:bg-black text-black dark:text-white flex flex-col border-t md:border-t-0 md:border-l border-border/40 overflow-hidden">
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border/40 shrink-0 bg-white dark:bg-black">
               <Avatar
                 className="w-9 h-9 ring-2 ring-background cursor-pointer"

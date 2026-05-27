@@ -451,10 +451,10 @@ const ReelItem = ({
         Layout: Video Card centered + Action Icons to the right.
         Comments/Options panels overlay as floating panels positioned to the right of the video.
       */}
-      <div className="flex items-end justify-center relative h-[calc(100vh-20px)] max-h-none w-full max-w-[950px] px-4 transition-all duration-300 mx-auto">
+      <div className="flex items-end justify-center relative h-[100dvh] md:h-[calc(100vh-20px)] max-h-none w-full md:max-w-[950px] px-0 md:px-4 transition-all duration-300 mx-auto">
         
         {/* Main Video Area */}
-        <div className={`relative w-full max-w-[500px] md:max-w-[600px] h-full bg-black overflow-hidden border ${isDark ? "border-neutral-800" : "border-neutral-200"} shadow-2xl flex items-center justify-center group/player rounded-2xl mx-auto`}>
+        <div className={`relative w-full md:max-w-[500px] lg:max-w-[600px] h-full bg-black overflow-hidden border-none md:border ${isDark ? "md:border-neutral-800" : "md:border-neutral-200"} shadow-none md:shadow-2xl flex items-center justify-center group/player rounded-none md:rounded-2xl mx-auto`}>
           <video
             ref={videoRef}
             src={reel.image_url}
@@ -1096,15 +1096,7 @@ export default function Reels() {
 
   return (
     <AppLayout>
-      <div className={`h-screen w-full ${isDark ? "bg-black text-white" : "bg-white text-black"} flex items-center justify-center relative overflow-hidden select-none`}>
-        
-        {/* Floating Back Arrow for mobile navigation */}
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-6 left-6 w-10 h-10 rounded-full bg-neutral-900/50 hover:bg-neutral-900/80 backdrop-blur-sm flex items-center justify-center text-white transition-all z-40 md:hidden cursor-pointer"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+      <div className={`h-[100dvh] w-full ${isDark ? "bg-black text-white" : "bg-white text-black"} flex items-center justify-center relative overflow-hidden select-none`}>
 
         {/* Far Right Up/Down Chevrons for page scroll */}
         <div className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-40 hidden md:flex">
