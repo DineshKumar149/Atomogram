@@ -1,4 +1,4 @@
-import { Home, Compass, PlaySquare } from "lucide-react";
+import { Home, Compass, PlaySquare, PlusSquare } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -62,16 +62,15 @@ const BottomNav = ({ onOpenCreate }: BottomNavProps) => {
           />
         </Link>
 
-        {/* Create — center featured button */}
+        {/* Create */}
         <button
           onClick={onOpenCreate}
           className="flex flex-col items-center gap-0.5 p-2 min-w-[52px] transition-transform active:scale-90"
         >
-          <div className="w-8 h-8 rounded-xl bg-foreground flex items-center justify-center shadow-sm">
-            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
-              <path d="M12 5v14M5 12h14" stroke="hsl(var(--background))" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
-          </div>
+          <PlusSquare
+            className="w-6 h-6 text-muted-foreground hover:text-foreground transition-all"
+            strokeWidth={1.8}
+          />
         </button>
 
         {/* Reels */}

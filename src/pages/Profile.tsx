@@ -573,11 +573,11 @@ const Profile = () => {
             )}
           </div>
 
-          <div className="px-4 sm:px-6 relative pb-8">
-            <div className="flex flex-col md:flex-row items-center md:items-start justify-between -mt-16 sm:-mt-20">
-              
+          <div className="px-4 sm:px-6 relative pb-4 md:pb-8">
+            {/* --- DESKTOP HEADER --- */}
+            <div className="hidden md:flex flex-row items-start justify-between -mt-20">
               {/* Left: Stats */}
-              <div className="hidden md:flex gap-6 mt-28 order-2 md:order-1 flex-1">
+              <div className="flex gap-6 mt-28 flex-1">
                 <div className="flex flex-col items-center">
                   <span className="font-extrabold text-foreground text-2xl font-display">{postsCount}</span>
                   <span className="text-muted-foreground text-[11px] font-bold tracking-wider uppercase mt-1">Posts</span>
@@ -598,11 +598,11 @@ const Profile = () => {
                 </button>
               </div>
 
-              {/* Center: Avatar */}
-              <div className="relative flex flex-col items-center order-1 md:order-2 z-10 mx-auto">
+              {/* Center: Avatar & Info */}
+              <div className="relative flex flex-col items-center z-10 mx-auto">
                 <div className="relative group">
                   <div className="p-1 rounded-full bg-background cursor-pointer shadow-2xl" onClick={handleAvatarTap}>
-                    <Avatar className={`w-36 h-36 sm:w-44 sm:h-44 ring-4 ring-background shadow-inner ${hasStory ? 'ring-primary border-4 border-transparent bg-gradient-to-tr from-pink-500 to-amber-500 p-1' : ''}`}>
+                    <Avatar className={`w-44 h-44 ring-4 ring-background shadow-inner ${hasStory ? 'ring-primary border-4 border-transparent bg-gradient-to-tr from-pink-500 to-amber-500 p-1' : ''}`}>
                       <AvatarImage src={displayAvatar || ""} className="object-cover rounded-full" />
                       <AvatarFallback className="bg-foreground text-background text-4xl font-bold rounded-full">
                         {displayFallback}
@@ -643,27 +643,19 @@ const Profile = () => {
                       </div>
                     )}
                   </h1>
-
                   {bio && <p className="text-sm font-medium text-foreground/80 max-w-xs mx-auto">{bio}</p>}
                   {username && <p className="text-xs text-muted-foreground font-semibold font-body tracking-wider uppercase">@{username}</p>}
                 </div>
               </div>
 
               {/* Right: Actions */}
-              <div className="flex md:flex-col items-center md:items-end gap-3 mt-6 md:mt-28 order-3 md:order-3 flex-1">
+              <div className="flex flex-col items-end gap-3 mt-28 flex-1">
                 {isOwnProfile ? (
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Button
-                      onClick={() => setShowEditProfile(true)}
-                      variant="outline"
-                      className="h-10 px-6 rounded-full font-bold text-sm border-border/60 hover:bg-secondary glass-card shadow-sm"
-                    >
+                  <div className="flex flex-row gap-2">
+                    <Button onClick={() => setShowEditProfile(true)} variant="outline" className="h-10 px-6 rounded-full font-bold text-sm border-border/60 hover:bg-secondary glass-card shadow-sm">
                       Edit Profile
                     </Button>
-                    <Button
-                      onClick={() => postFileInputRef.current?.click()}
-                      className="h-10 px-6 rounded-full font-bold text-sm bg-blue-600 text-white hover:bg-blue-700 shadow-md transition-all"
-                    >
+                    <Button onClick={() => postFileInputRef.current?.click()} className="h-10 px-6 rounded-full font-bold text-sm bg-blue-600 text-white hover:bg-blue-700 shadow-md transition-all">
                       <Plus className="w-4 h-4 mr-1" /> New Post
                     </Button>
                     <input type="file" multiple accept="image/*,video/*" className="hidden" ref={postFileInputRef} onChange={handlePostUpload} />
@@ -678,46 +670,23 @@ const Profile = () => {
                           : "bg-blue-600 text-white hover:bg-blue-700 shadow-md"
                       }`}
                     >
-                      {followStatus === "following" 
-                        ? "Following" 
-                        : followStatus === "pending" 
-                          ? "Requested" 
-                          : isFollowedBack 
-                            ? "Follow Back" 
-                            : "Follow"}
+                      {followStatus === "following" ? "Following" : followStatus === "pending" ? "Requested" : isFollowedBack ? "Follow Back" : "Follow"}
                     </Button>
-                    <Button
-                      onClick={handleStartChat}
-                      size="icon"
-                      variant="outline"
-                      className="h-10 w-10 rounded-full border-border/60 glass-card hover:bg-secondary shrink-0"
-                    >
+                    <Button onClick={handleStartChat} size="icon" variant="outline" className="h-10 w-10 rounded-full border-border/60 glass-card hover:bg-secondary shrink-0">
                       <MessageCircle className="w-4 h-4 text-foreground" />
                     </Button>
                   </div>
                 )}
 
-                {/* Social Links / Websites */}
-                <div className="flex gap-2 mt-4 md:mt-2 overflow-x-auto max-w-[200px] scrollbar-none justify-center md:justify-end">
+                {/* Social Links */}
+                <div className="flex gap-2 mt-2 overflow-x-auto max-w-[200px] scrollbar-none justify-end">
                   {(profileData?.websites || []).map((site: string, idx: number) => (
-                    <a
-                      key={idx}
-                      href={site.startsWith("http") ? site : `https://${site}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-9 h-9 rounded-full glass-card border border-border/50 flex items-center justify-center hover:bg-secondary transition-colors shrink-0 shadow-sm text-muted-foreground hover:text-foreground"
-                    >
+                    <a key={idx} href={site.startsWith("http") ? site : `https://${site}`} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full glass-card border border-border/50 flex items-center justify-center hover:bg-secondary transition-colors shrink-0 shadow-sm text-muted-foreground hover:text-foreground">
                       <LinkIcon className="w-4 h-4" />
                     </a>
                   ))}
-                  {/* Fallback for legacy website column */}
                   {website && (!profileData?.websites || profileData.websites.length === 0) && (
-                    <a
-                      href={website.startsWith("http") ? website : `https://${website}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-9 h-9 rounded-full glass-card border border-border/50 flex items-center justify-center hover:bg-secondary transition-colors shrink-0 shadow-sm text-muted-foreground hover:text-foreground"
-                    >
+                    <a href={website.startsWith("http") ? website : `https://${website}`} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full glass-card border border-border/50 flex items-center justify-center hover:bg-secondary transition-colors shrink-0 shadow-sm text-muted-foreground hover:text-foreground">
                       <LinkIcon className="w-4 h-4" />
                     </a>
                   )}
@@ -725,26 +694,120 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Mobile Stats (only visible on mobile) */}
-            <div className="flex md:hidden justify-around items-center w-full mt-8 pt-6 border-t border-border/40">
-              <div className="flex flex-col items-center">
-                <span className="font-extrabold text-foreground text-xl font-display">{postsCount}</span>
-                <span className="text-muted-foreground text-[10px] font-bold tracking-wider uppercase mt-1">Posts</span>
+            {/* --- MOBILE HEADER --- */}
+            <div className="flex md:hidden flex-col -mt-8 relative z-10 px-1">
+              <div className="flex items-center justify-between w-full">
+                {/* Mobile Avatar */}
+                <div className="relative group shrink-0">
+                  <div className="p-1 rounded-full bg-background cursor-pointer shadow-md" onClick={handleAvatarTap}>
+                    <Avatar className={`w-[84px] h-[84px] ring-2 ring-background shadow-inner ${hasStory ? 'ring-primary border-2 border-transparent bg-gradient-to-tr from-pink-500 to-amber-500 p-0.5' : ''}`}>
+                      <AvatarImage src={displayAvatar || ""} className="object-cover rounded-full" />
+                      <AvatarFallback className="bg-foreground text-background text-2xl font-bold rounded-full">
+                        {displayFallback}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  {isOwnProfile && (
+                    <button
+                      onClick={() => postFileInputRef.current?.click()}
+                      className="absolute bottom-1 right-1 w-6 h-6 bg-[#0095f6] text-white rounded-full flex items-center justify-center border-2 border-background z-10"
+                    >
+                      <Plus className="w-4 h-4" strokeWidth={3} />
+                    </button>
+                  )}
+                  {isVerified && !isOwnProfile && (
+                    <div className="absolute bottom-1 right-1 bg-blue-500 rounded-full border-2 border-background w-6 h-6 flex items-center justify-center shadow-md">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Mobile Stats */}
+                <div className="flex flex-1 justify-around ml-4 items-center">
+                  <div className="flex flex-col items-center">
+                    <span className="font-bold text-foreground text-lg">{postsCount}</span>
+                    <span className="text-foreground/90 text-[13px]">posts</span>
+                  </div>
+                  <button 
+                    className={`flex flex-col items-center ${(!isOwnProfile && profileData?.is_private && followStatus !== "following") ? "opacity-50 pointer-events-none" : ""}`}
+                    onClick={() => setShowFollowersModal("followers")}
+                  >
+                    <span className="font-bold text-foreground text-lg">{followersCount}</span>
+                    <span className="text-foreground/90 text-[13px]">followers</span>
+                  </button>
+                  <button 
+                    className={`flex flex-col items-center ${(!isOwnProfile && profileData?.is_private && followStatus !== "following") ? "opacity-50 pointer-events-none" : ""}`}
+                    onClick={() => setShowFollowersModal("following")}
+                  >
+                    <span className="font-bold text-foreground text-lg">{followingCount}</span>
+                    <span className="text-foreground/90 text-[13px]">following</span>
+                  </button>
+                </div>
               </div>
-              <button 
-                className={`flex flex-col items-center ${(!isOwnProfile && profileData?.is_private && followStatus !== "following") ? "opacity-50 pointer-events-none" : ""}`} 
-                onClick={() => setShowFollowersModal("followers")}
-              >
-                <span className="font-extrabold text-foreground text-xl font-display">{followersCount}</span>
-                <span className="text-muted-foreground text-[10px] font-bold tracking-wider uppercase mt-1">Followers</span>
-              </button>
-              <button 
-                className={`flex flex-col items-center ${(!isOwnProfile && profileData?.is_private && followStatus !== "following") ? "opacity-50 pointer-events-none" : ""}`} 
-                onClick={() => setShowFollowersModal("following")}
-              >
-                <span className="font-extrabold text-foreground text-xl font-display">{followingCount}</span>
-                <span className="text-muted-foreground text-[10px] font-bold tracking-wider uppercase mt-1">Following</span>
-              </button>
+
+              {/* Mobile Bio */}
+              <div className="mt-3">
+                <h1 className="text-[14px] font-bold text-foreground flex items-center">
+                  {displayName}
+                  {isAdmin && (
+                    <Button 
+                      onClick={(e) => { e.stopPropagation(); bulkUploadInputRef.current?.click(); }} 
+                      variant="secondary" 
+                      size="sm" 
+                      disabled={bulkUploading}
+                      className="h-5 text-[10px] px-1.5 ml-2 rounded-sm shadow-none"
+                    >
+                      <Plus className="w-2.5 h-2.5 mr-0.5" />
+                      Bulk
+                    </Button>
+                  )}
+                </h1>
+                {bio && <p className="text-[14px] text-foreground/90 mt-0.5 leading-snug whitespace-pre-wrap">{bio}</p>}
+                
+                {/* Mobile Social Links */}
+                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
+                  {(profileData?.websites || []).map((site: string, idx: number) => (
+                    <a key={idx} href={site.startsWith("http") ? site : `https://${site}`} target="_blank" rel="noopener noreferrer" className="text-[14px] text-blue-800 dark:text-[#e0f2fe] font-medium flex items-center">
+                      <LinkIcon className="w-3.5 h-3.5 mr-1" />
+                      {site.replace(/^https?:\/\//, '')}
+                    </a>
+                  ))}
+                  {website && (!profileData?.websites || profileData.websites.length === 0) && (
+                    <a href={website.startsWith("http") ? website : `https://${website}`} target="_blank" rel="noopener noreferrer" className="text-[14px] text-blue-800 dark:text-[#e0f2fe] font-medium flex items-center">
+                      <LinkIcon className="w-3.5 h-3.5 mr-1" />
+                      {website.replace(/^https?:\/\//, '')}
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Mobile Actions */}
+              <div className="flex items-center gap-1.5 mt-4">
+                {isOwnProfile ? (
+                  <>
+                    <Button onClick={() => setShowEditProfile(true)} variant="secondary" className="flex-1 h-8 rounded-lg font-semibold text-[13px] bg-secondary/80">
+                      Edit profile
+                    </Button>
+                    <Button onClick={() => postFileInputRef.current?.click()} variant="secondary" className="flex-1 h-8 rounded-lg font-semibold text-[13px] bg-secondary/80">
+                      New Post
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      onClick={handleToggleFollow}
+                      className={`flex-1 h-8 rounded-lg font-semibold text-[13px] ${
+                        followStatus !== "none" ? "bg-secondary text-foreground hover:bg-secondary/80" : "bg-[#0095f6] text-white hover:bg-[#0074cc]"
+                      }`}
+                    >
+                      {followStatus === "following" ? "Following" : followStatus === "pending" ? "Requested" : isFollowedBack ? "Follow Back" : "Follow"}
+                    </Button>
+                    <Button onClick={handleStartChat} variant="secondary" className="flex-1 h-8 rounded-lg font-semibold text-[13px] bg-secondary/80">
+                      Message
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>

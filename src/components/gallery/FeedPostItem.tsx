@@ -477,8 +477,8 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
       {modalUserId && (
         <UserProfileModal userId={modalUserId} onClose={() => setModalUserId(null)} />
       )}
-      <div ref={postRef} className="post-container bg-card w-full mb-0 md:mb-6 relative hover:shadow-xl transition-shadow duration-300 animate-fade-in group border-b border-border/10 sm:border-b-0 sm:rounded-2xl pb-2 md:pb-4">
-        <div className="post-header-mobile flex items-center justify-between px-5 py-4">
+      <div ref={postRef} className="post-container bg-background sm:bg-card w-full mb-0 md:mb-6 relative hover:shadow-xl transition-shadow duration-300 animate-fade-in group border-b border-border/10 sm:border-b-0 sm:rounded-2xl pb-2 md:pb-4">
+        <div className="post-header-mobile flex items-center justify-between px-3 py-3">
           <div className="flex items-center gap-3.5">
             <Avatar
               className="w-10 h-10 ring-2 ring-background shadow-sm cursor-pointer hover:opacity-90"
@@ -683,7 +683,7 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
           )}
         </div>
 
-        <div className="flex items-center justify-between px-5 pt-4 pb-2">
+        <div className="flex items-center justify-between px-3 pt-3 pb-1">
           <div className="flex items-center gap-5">
             <button onClick={handleLike} className="hover:opacity-70 transition-transform active:scale-90">
               <Heart
@@ -744,7 +744,7 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
         </div>
 
         {sharesCount > 0 && (
-          <div className="px-5 pb-2">
+          <div className="px-3 pb-1">
             <span className="text-[13px] text-muted-foreground font-medium">
               {sharesCount.toLocaleString()} shares
             </span>
@@ -752,8 +752,14 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
         )}
 
         {item.caption && item.caption.trim() && !isFileName(item.caption) && (
-          <div className="px-5 pb-3">
-            <span className="text-[14px] leading-relaxed text-foreground/90 font-body">
+          <div className="px-3 pb-3">
+            <span className="text-[14px] leading-[1.3] text-foreground font-body break-words">
+              <span 
+                className="font-bold mr-1.5 cursor-pointer hover:text-muted-foreground transition-colors"
+                onClick={(e) => { e.stopPropagation(); goToProfile(item.user_id); }}
+              >
+                {authorName}
+              </span>
               {item.caption}
             </span>
           </div>

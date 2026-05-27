@@ -73,15 +73,15 @@ const TopNavMobile = () => {
             className="flex items-center"
           >
             <span style={{
-              fontSize: 24, fontWeight: 700,
-              fontFamily: "'Billabong','Dancing Script',cursive,sans-serif", letterSpacing: "0.5px",
-            }} className="text-foreground">
+              fontSize: 26, fontWeight: 700,
+              fontFamily: "'Billabong','Dancing Script',cursive,sans-serif", letterSpacing: "0.2px",
+            }} className="text-foreground mt-1">
               Atome
             </span>
           </Link>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             {/* Notifications */}
             <button
               onClick={openNotifications}

@@ -144,7 +144,7 @@ const Explore = () => {
     // We want to create a mosaic layout where some videos span 2 rows.
     // CSS Grid can handle this nicely with auto-rows.
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 auto-rows-[minmax(0,_1fr)]" style={{ gridAutoRows: 'minmax(200px, 300px)' }}>
+      <div className="grid grid-cols-3 gap-[1px] md:gap-6 auto-rows-[130px] md:auto-rows-[250px]">
         {posts.map((post, i) => {
           // Dynamic row span for variety
           const isVideo = post.media_type === "video";
@@ -154,7 +154,7 @@ const Explore = () => {
           return (
             <div
               key={post.id}
-              className={`relative cursor-pointer overflow-hidden group bg-background border border-border rounded-2xl transition-all duration-500 bw-hover-gradient ${
+              className={`relative cursor-pointer overflow-hidden group bg-background border-none md:border md:border-border rounded-none md:rounded-2xl transition-all duration-500 bw-hover-gradient ${
                 spanTwoRows ? "row-span-2" : "row-span-1"
               }`}
               onClick={() => setSelectedPost(post)}

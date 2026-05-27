@@ -307,7 +307,7 @@ export default function StoriesBar({ onOpenViewer, onOpenCreate }: StoriesBarPro
         onMouseLeave={handleMouseLeave}
         onMouseUp={handleMouseUp}
         onMouseMove={handleMouseMove}
-        className={`flex gap-[18px] overflow-x-auto pb-1.5 pt-0.5 select-none ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
+        className={`flex gap-[18px] overflow-x-auto pb-1.5 pt-0.5 select-none overscroll-x-contain touch-pan-y ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {/* Own story circle */}
