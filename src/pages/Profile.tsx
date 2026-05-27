@@ -19,6 +19,7 @@ import EditProfileModal from "@/components/profile/EditProfileModal";
 import FollowersModal from "@/components/profile/FollowersModal";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import StoryViewer from "@/components/stories/StoryViewer";
+import { isAdminUser } from "@/lib/admin";
 
 const Profile = () => {
   const { id } = useParams();
@@ -28,6 +29,7 @@ const Profile = () => {
 
   const isOwnProfile = !id || id === user?.id;
   const profileId = id || user?.id;
+  const isAdmin = isAdminUser(user?.email);
 
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState<any>(null);
@@ -47,6 +49,9 @@ const Profile = () => {
   const [croppedBlob, setCroppedBlob] = useState<Blob | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const postFileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const bulkUploadInputRef = useRef<HTMLInputElement>(null);
 
   const [isBlockedByTarget, setIsBlockedByTarget] = useState(false);
   const [hasBlockedTarget, setHasBlockedTarget] = useState(false);
@@ -336,6 +341,43 @@ const Profile = () => {
     setShowUploadDialog(true);
   };
 
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !user || !profileId) return;
+    const arr = Array.from(files);
+    if (bulkUploadInputRef.current) bulkUploadInputRef.current.value = "";
+    
+    const images = arr.filter((f) => f.type.startsWith("image/")).slice(0, 1000);
+    if (images.length === 0) return;
+
+    setBulkUploading(true);
+    toast({ title: `Uploading ${images.length} images...`, description: "Please wait, this might take a while." });
+    try {
+      for (let i = 0; i < images.length; i += 10) {
+        const batch = images.slice(i, i + 10);
+        const imageUrls: string[] = [];
+        for (const img of batch) {
+          const url = await uploadFileToStorage(img, "image", img.name);
+          imageUrls.push(url);
+        }
+        
+        await supabase.from("posts").insert({ 
+          user_id: profileId, 
+          image_url: imageUrls[0], 
+          image_urls: imageUrls, 
+          caption: "", 
+          media_type: "image" 
+        });
+      }
+      toast({ title: "Bulk upload complete!" });
+      fetchUserPosts();
+    } catch (err: any) {
+      toast({ title: "Bulk upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setBulkUploading(false);
+    }
+  };
+
   const executeUpload = async () => {
     if (!user) return;
     setPostUploading(true);
@@ -585,7 +627,23 @@ const Profile = () => {
                 <div className="text-center mt-4 space-y-1">
                   <h1 className="text-3xl font-extrabold text-foreground font-display tracking-tight flex items-center justify-center gap-2">
                     {displayName}
+                    {isAdmin && (
+                      <div className="ml-2 inline-flex items-center">
+                        <Button 
+                          onClick={(e) => { e.stopPropagation(); bulkUploadInputRef.current?.click(); }} 
+                          variant="secondary" 
+                          size="sm" 
+                          disabled={bulkUploading}
+                          className="h-7 text-xs px-2 rounded-full font-bold shadow-sm"
+                        >
+                          {bulkUploading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Plus className="w-3 h-3 mr-1" />}
+                          Bulk Upload
+                        </Button>
+                        <input type="file" multiple accept="image/*" className="hidden" ref={bulkUploadInputRef} onChange={handleBulkUpload} />
+                      </div>
+                    )}
                   </h1>
+
                   {bio && <p className="text-sm font-medium text-foreground/80 max-w-xs mx-auto">{bio}</p>}
                   {username && <p className="text-xs text-muted-foreground font-semibold font-body tracking-wider uppercase">@{username}</p>}
                 </div>
