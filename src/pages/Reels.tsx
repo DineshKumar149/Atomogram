@@ -62,6 +62,7 @@ const ReelItem = ({
   // Comments state
   const [comments, setComments] = useState<any[]>([]);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [showHeartAnimation, setShowHeartAnimation] = useState(false);
 
   useEffect(() => {
     if (commentsOpen) {
@@ -425,6 +426,14 @@ const ReelItem = ({
     setTimeout(() => setShowPlayIndicator(null), 500);
   };
 
+  const handleDoubleClickLike = () => {
+    if (!liked) {
+      handleLike();
+    }
+    setShowHeartAnimation(true);
+    setTimeout(() => setShowHeartAnimation(false), 1000);
+  };
+
   const shareToPlatform = (platform: string) => {
     const url = `${window.location.origin}/profile/${reel.user_id}`;
     if (platform === "threads") {
@@ -473,9 +482,16 @@ const ReelItem = ({
             loop
             muted={isMuted}
             playsInline
-            className="absolute inset-0 w-full h-full object-cover cursor-pointer select-none"
+            className="absolute inset-0 w-full h-full object-contain cursor-pointer select-none"
             onClick={togglePlayPause}
+            onDoubleClick={handleDoubleClickLike}
           />
+          
+          {showHeartAnimation && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30 animate-heart-pop text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
+              <Heart className="w-28 h-28 fill-current" />
+            </div>
+          )}
 
           {/* Video Mute Toggle bottom right */}
           <button
