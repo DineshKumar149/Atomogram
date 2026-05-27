@@ -104,7 +104,7 @@ const Gallery = () => {
           </div>
 
           {/* Feed Posts */}
-          <div className="flex flex-col gap-6 pb-20 md:pb-8">
+          <div className="flex flex-col gap-0 md:gap-6 pb-20 md:pb-8">
             {isLoading ? (
               <div className="flex items-center justify-center py-20 w-full"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
             ) : media.length === 0 ? (

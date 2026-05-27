@@ -477,7 +477,7 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
       {modalUserId && (
         <UserProfileModal userId={modalUserId} onClose={() => setModalUserId(null)} />
       )}
-      <div ref={postRef} className="post-container content-vis-auto bg-card w-full mb-6 relative hover:shadow-xl transition-shadow duration-300 animate-fade-in group border-b border-border/10 sm:border-b-0 sm:rounded-2xl pb-4">
+      <div ref={postRef} className="post-container bg-card w-full mb-0 md:mb-6 relative hover:shadow-xl transition-shadow duration-300 animate-fade-in group border-b border-border/10 sm:border-b-0 sm:rounded-2xl pb-2 md:pb-4">
         <div className="post-header-mobile flex items-center justify-between px-5 py-4">
           <div className="flex items-center gap-3.5">
             <Avatar
