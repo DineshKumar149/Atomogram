@@ -555,7 +555,7 @@ const ReelItem = ({
         </div>
 
         {/* 2. Floating Comments Panel — overlaid to the right of the video card */}
-        {showComments && (
+        {commentsOpen && (
           <div className={`absolute inset-x-0 bottom-0 top-auto h-[70%] sm:h-full sm:inset-auto sm:left-[calc(50%+260px)] md:left-[calc(50%+315px)] w-full sm:w-[300px] md:w-[340px] ${isDark ? "bg-[#1c1c1e] text-white border-white/10" : "bg-white text-black border-neutral-200"} border rounded-t-2xl sm:rounded-2xl z-30 flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-right duration-250 text-left shadow-2xl`}>
             {/* Header */}
             <div className={`flex flex-col px-4 pt-4 pb-3 border-b ${isDark ? "border-white/10" : "border-neutral-200"}`}>
