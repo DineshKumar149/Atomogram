@@ -1,7 +1,6 @@
-import { Home, Compass, PlusSquare, MessageCircle, PlaySquare } from "lucide-react";
+import { Home, Compass, PlaySquare } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useChatUnread } from "@/hooks/use-chat-unread";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
@@ -13,7 +12,6 @@ interface BottomNavProps {
 const BottomNav = ({ onOpenCreate }: BottomNavProps) => {
   const { user } = useAuth();
   const location = useLocation();
-  const { total: unreadTotal } = useChatUnread();
   const [profileData, setProfileData] = useState<any>(null);
 
   useEffect(() => {
@@ -84,18 +82,7 @@ const BottomNav = ({ onOpenCreate }: BottomNavProps) => {
           />
         </Link>
 
-        {/* Chat */}
-        <Link to="/chat" className="relative flex flex-col items-center gap-0.5 p-2 min-w-[52px] transition-transform active:scale-90">
-          <MessageCircle
-            className={`w-6 h-6 transition-all ${isActive("/chat") ? "text-foreground" : "text-muted-foreground"}`}
-            strokeWidth={isActive("/chat") ? 2.5 : 1.8}
-          />
-          {unreadTotal > 0 && (
-            <span className="absolute top-1.5 right-2 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-background">
-              {unreadTotal > 9 ? "9+" : unreadTotal}
-            </span>
-          )}
-        </Link>
+
 
         {/* Profile */}
         <Link to="/profile" className="flex flex-col items-center gap-0.5 p-2 min-w-[52px] transition-transform active:scale-90">

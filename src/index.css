@@ -225,6 +225,11 @@
   .profile-cover {
     background: linear-gradient(135deg, hsl(253, 91%, 55%), hsl(290, 70%, 55%), hsl(340, 80%, 60%));
   }
+
+  .content-vis-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 800px;
+  }
 }
 
 @keyframes heartBurst {
