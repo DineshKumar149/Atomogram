@@ -452,7 +452,7 @@ const Profile = () => {
   const reelsCount = uploadedPosts.filter(p => p.media_type === "video").length;
   
   const gridSource = activeTab === "posts" 
-    ? uploadedPosts 
+    ? uploadedPosts.filter(p => p.media_type !== "video")
     : activeTab === "reels" 
       ? uploadedPosts.filter(p => p.media_type === "video")
       : activeTab === "saved" 
