@@ -652,16 +652,22 @@ const Profile = () => {
               {/* Right: Actions */}
               <div className="flex md:flex-col items-center md:items-end gap-3 mt-6 md:mt-28 order-3 md:order-3 flex-1">
                 {isOwnProfile ? (
-                  <>
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Button
                       onClick={() => setShowEditProfile(true)}
                       variant="outline"
-                      className="h-10 px-8 rounded-full font-bold text-sm border-border/60 hover:bg-secondary glass-card shadow-sm"
+                      className="h-10 px-6 rounded-full font-bold text-sm border-border/60 hover:bg-secondary glass-card shadow-sm"
                     >
                       Edit Profile
                     </Button>
+                    <Button
+                      onClick={() => postFileInputRef.current?.click()}
+                      className="h-10 px-6 rounded-full font-bold text-sm bg-blue-600 text-white hover:bg-blue-700 shadow-md transition-all"
+                    >
+                      <Plus className="w-4 h-4 mr-1" /> New Post
+                    </Button>
                     <input type="file" multiple accept="image/*,video/*" className="hidden" ref={postFileInputRef} onChange={handlePostUpload} />
-                  </>
+                  </div>
                 ) : (
                   <div className="flex gap-2">
                     <Button
