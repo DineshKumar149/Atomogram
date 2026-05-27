@@ -592,7 +592,7 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
                     if (idx !== currentImageIndex) setCurrentImageIndex(idx);
                   }, 50));
                 }}
-                className="flex overflow-x-auto snap-x snap-mandatory w-full touch-pan-x overscroll-x-contain"
+                className="flex overflow-x-auto snap-x snap-mandatory w-full overscroll-x-contain"
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
               >
                 {imageList.map((src, idx) => (
