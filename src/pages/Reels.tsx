@@ -869,7 +869,8 @@ const ReelItem = ({
               )}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* 3. Floating 3-dot Options Panel — centered on screen with backdrop */}
         {optionsOpen && (
