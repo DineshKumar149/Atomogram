@@ -542,7 +542,7 @@ const Profile = () => {
               <div className="w-full h-full" />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-            <button onClick={() => navigate(-1)} className="absolute top-4 left-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-colors text-white">
+            <button onClick={() => navigate(-1)} className="hidden md:flex absolute top-4 left-4 w-9 h-9 items-center justify-center rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-colors text-white">
               <ArrowLeft className="w-4 h-4" />
             </button>
             {isOwnProfile && (
@@ -723,7 +723,7 @@ const Profile = () => {
                 </div>
 
                 {/* Mobile Stats */}
-                <div className="flex flex-1 justify-around ml-4 items-center mt-6">
+                <div className="flex flex-1 justify-around ml-4 items-center mt-10">
                   <div className="flex flex-col items-center">
                     <span className="font-bold text-foreground text-lg">{postsCount}</span>
                     <span className="text-foreground/90 text-[13px]">posts</span>

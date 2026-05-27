@@ -34,6 +34,7 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
   const [modalCommentText, setModalCommentText] = useState("");
   const modalInputRef = useRef<HTMLInputElement>(null);
   const [showModalEmojiPicker, setShowModalEmojiPicker] = useState(false);
+  const [showHeartAnimation, setShowHeartAnimation] = useState(false);
 
   // Custom Video Player & Share Dialog States
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -439,6 +440,14 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
     }
   };
 
+  const handleDoubleClickLike = () => {
+    if (!liked) {
+      handleLike();
+    }
+    setShowHeartAnimation(true);
+    setTimeout(() => setShowHeartAnimation(false), 1000);
+  };
+
   const navigate = useNavigate();
   const goToProfile = (userId: string) => {
     navigate(`/profile/${userId}`);
@@ -599,7 +608,7 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
                   <div
                     key={idx}
                     className="snap-center flex-shrink-0 w-full relative"
-                    onDoubleClick={handleLike}
+                    onDoubleClick={handleDoubleClickLike}
                     onClick={item.music_url ? togglePlayPause : undefined}
                   >
                     <img
@@ -610,6 +619,11 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
                       decoding="async"
                       className="w-full h-auto object-contain max-h-[85vh] bg-black/5 select-none cursor-pointer"
                     />
+                    {showHeartAnimation && (
+                      <div className="absolute top-1/2 left-1/2 pointer-events-none z-20 animate-heart-pop text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
+                        <Heart className="w-24 h-24 fill-current" />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -666,11 +680,16 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
               <img
                 src={item.image_url}
                 alt="Post"
-                onDoubleClick={handleLike}
+                onDoubleClick={handleDoubleClickLike}
                 loading="lazy"
                 decoding="async"
                 className="w-full h-auto object-contain max-h-[85vh] bg-black/5 transition-transform duration-700 group-hover:scale-[1.01]"
               />
+              {showHeartAnimation && (
+                <div className="absolute top-1/2 left-1/2 pointer-events-none z-20 animate-heart-pop text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
+                  <Heart className="w-24 h-24 fill-current" />
+                </div>
+              )}
               {item.music_url && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setVideoMuted(!videoMuted); }}
@@ -767,10 +786,20 @@ const FeedPostItem = ({ item, currentUser }: { item: any; currentUser: any }) =>
       </div>
 
       {showCommentsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white/80 dark:bg-black dark:text-white backdrop-blur-2xl border border-white/50 dark:border-white/10 rounded-[32px] shadow-2xl p-6 w-full max-w-md flex flex-col h-[520px] max-h-[90vh] animate-in zoom-in-95 duration-200 relative">
+        <div 
+          className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setShowCommentsModal(false)}
+        >
+          <div 
+            className="w-full md:max-w-md h-[70vh] md:h-[600px] md:max-h-[90vh] bg-background border border-border/50 md:rounded-[32px] rounded-t-[32px] shadow-2xl flex flex-col animate-in slide-in-from-bottom-full md:slide-in-from-bottom-4 md:zoom-in-95 duration-300 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Grabber for mobile */}
+            <div className="w-full flex justify-center pt-3 pb-1 md:hidden">
+              <div className="w-12 h-1.5 bg-muted rounded-full" />
+            </div>
             
-            <div className="flex justify-between items-center pb-4 border-b border-border/40">
+            <div className="flex justify-between items-center px-6 pb-4 pt-2 md:pt-6 border-b border-border/40">
               <div>
                 <h3 className="text-lg font-bold text-foreground dark:text-white">Comments</h3>
                 <p className="text-[10px] text-muted-foreground dark:text-white/60 font-medium">All thoughts on this memory</p>

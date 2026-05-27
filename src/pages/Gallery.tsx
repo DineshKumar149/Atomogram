@@ -10,6 +10,31 @@ import StoriesBar from "@/components/stories/StoriesBar";
 import StoryViewer from "@/components/stories/StoryViewer";
 import CreateStory from "@/components/stories/CreateStory";
 
+const PostSkeleton = () => (
+  <div className="w-full flex flex-col gap-3 animate-pulse pt-2 pb-4">
+    <div className="flex items-center gap-3 px-4">
+      <div className="w-9 h-9 bg-neutral-200 dark:bg-neutral-800 rounded-full" />
+      <div className="flex flex-col gap-1.5 flex-1">
+        <div className="h-3.5 bg-neutral-200 dark:bg-neutral-800 rounded-md w-32" />
+        <div className="h-2.5 bg-neutral-200 dark:bg-neutral-800 rounded-md w-24" />
+      </div>
+      <div className="w-6 h-6 bg-neutral-200 dark:bg-neutral-800 rounded-full" />
+    </div>
+    <div className="w-full aspect-square md:aspect-[4/5] bg-neutral-200 dark:bg-neutral-800" />
+    <div className="flex items-center gap-4 px-4 py-1">
+      <div className="w-7 h-7 bg-neutral-200 dark:bg-neutral-800 rounded-full" />
+      <div className="w-7 h-7 bg-neutral-200 dark:bg-neutral-800 rounded-full" />
+      <div className="w-7 h-7 bg-neutral-200 dark:bg-neutral-800 rounded-full" />
+      <div className="flex-1" />
+      <div className="w-7 h-7 bg-neutral-200 dark:bg-neutral-800 rounded-full" />
+    </div>
+    <div className="px-4 flex flex-col gap-2 mt-1">
+      <div className="h-3 bg-neutral-200 dark:bg-neutral-800 rounded-md w-1/4" />
+      <div className="h-3 bg-neutral-200 dark:bg-neutral-800 rounded-md w-3/4" />
+    </div>
+  </div>
+);
+
 const Gallery = () => {
   const { user } = useAuth();
   const [media, setMedia] = useState<any[]>([]);
@@ -106,7 +131,10 @@ const Gallery = () => {
           {/* Feed Posts */}
           <div className="flex flex-col gap-0 md:gap-6 pb-20 md:pb-8">
             {isLoading ? (
-              <div className="flex items-center justify-center py-20 w-full"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+              <div className="flex flex-col w-full gap-0 md:gap-6 mt-4 md:mt-0">
+                <PostSkeleton />
+                <PostSkeleton />
+              </div>
             ) : media.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-32 text-center border border-border rounded-3xl transition-all w-full">
                 <div className="p-8 rounded-full bg-foreground/5 mb-6"><ImageIcon className="w-16 h-16 text-foreground/50" /></div>

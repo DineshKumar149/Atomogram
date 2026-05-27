@@ -309,6 +309,37 @@ html { scroll-behavior: smooth; }
   }
 
   /* Post header padding */
+  .mobile-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+  
+  @keyframes heart-pop {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.5);
+    }
+    15% {
+      opacity: 0.9;
+      transform: translate(-50%, -50%) scale(1.2);
+    }
+    30% {
+      transform: translate(-50%, -50%) scale(1);
+    }
+    70% {
+      opacity: 0.9;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.8);
+    }
+  }
+
+  .animate-heart-pop {
+    animation: heart-pop 0.8s ease-out forwards;
+  }
+
+  /* Post header padding */
   .post-header-mobile {
     padding: 10px 14px !important;
   }
