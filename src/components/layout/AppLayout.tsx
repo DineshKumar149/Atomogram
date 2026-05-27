@@ -18,7 +18,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const isProfile = location.pathname.startsWith("/profile");
 
   const isHideTopNav = isChatRoom || isReels || isProfile;
-  const isHideBottomNav = isChatRoom || isReels;
+  const isHideBottomNav = isChatRoom;
 
   return (
     <>
@@ -31,8 +31,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         {/* Mobile Top Navigation */}
         {!isHideTopNav && <TopNavMobile />}
 
-        {/* Main Content Area — left padding matches collapsed sidebar width (72px) */}
-        <main className={`flex-1 w-full md:pl-[72px] transition-all duration-300 ${isHideTopNav ? "pt-0" : "pt-[48px] md:pt-0"} ${isHideBottomNav ? "pb-0" : "pb-[72px] md:pb-0"}`}>
+        {/* Main Content Area */}
+        <main className={`flex-1 w-full md:pl-[72px] transition-all duration-300 ${isHideTopNav || isReels ? "pt-0" : "pt-[48px] md:pt-0"} ${isHideBottomNav || isReels ? "pb-0" : "pb-[72px] md:pb-0"}`}>
           {children}
         </main>
 

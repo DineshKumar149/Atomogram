@@ -28,19 +28,25 @@ const BottomNav = ({ onOpenCreate }: BottomNavProps) => {
   }, [user]);
 
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + "/");
+  const isReels = location.pathname.startsWith("/reels");
 
   if (!user) return null;
 
   const avatarUrl = profileData?.avatar_url || user?.user_metadata?.avatar_url || "";
   const displayName = profileData?.display_name || "U";
 
+  const getIconColor = (path: string) => {
+    if (isReels) return isActive(path) ? "text-white" : "text-white/60";
+    return isActive(path) ? "text-foreground" : "text-muted-foreground";
+  };
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[100] md:hidden"
+    <nav className="fixed bottom-0 left-0 right-0 z-[100] md:hidden transition-all duration-300"
       style={{
-        background: "var(--mob-nav-bg, hsla(0,0%,100%,0.97))",
-        backdropFilter: "blur(20px) saturate(200%)",
-        WebkitBackdropFilter: "blur(20px) saturate(200%)",
-        borderTop: "1px solid hsla(0,0%,0%,0.08)",
+        background: isReels ? "rgba(0,0,0,0.6)" : "var(--mob-nav-bg, hsla(0,0%,100%,0.97))",
+        backdropFilter: isReels ? "blur(12px)" : "blur(20px) saturate(200%)",
+        WebkitBackdropFilter: isReels ? "blur(12px)" : "blur(20px) saturate(200%)",
+        borderTop: isReels ? "1px solid rgba(255,255,255,0.15)" : "1px solid hsla(0,0%,0%,0.08)",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
@@ -49,7 +55,7 @@ const BottomNav = ({ onOpenCreate }: BottomNavProps) => {
         {/* Home */}
         <Link to="/gallery" className="flex flex-col items-center gap-0.5 p-2 min-w-[52px] transition-transform active:scale-90">
           <Home
-            className={`w-6 h-6 transition-all ${isActive("/gallery") ? "text-foreground" : "text-muted-foreground"}`}
+            className={`w-6 h-6 transition-all ${getIconColor("/gallery")}`}
             strokeWidth={isActive("/gallery") ? 2.5 : 1.8}
           />
         </Link>
@@ -57,7 +63,7 @@ const BottomNav = ({ onOpenCreate }: BottomNavProps) => {
         {/* Explore */}
         <Link to="/explore" className="flex flex-col items-center gap-0.5 p-2 min-w-[52px] transition-transform active:scale-90">
           <Compass
-            className={`w-6 h-6 transition-all ${isActive("/explore") ? "text-foreground" : "text-muted-foreground"}`}
+            className={`w-6 h-6 transition-all ${getIconColor("/explore")}`}
             strokeWidth={isActive("/explore") ? 2.5 : 1.8}
           />
         </Link>
@@ -68,7 +74,7 @@ const BottomNav = ({ onOpenCreate }: BottomNavProps) => {
           className="flex flex-col items-center gap-0.5 p-2 min-w-[52px] transition-transform active:scale-90"
         >
           <PlusSquare
-            className="w-6 h-6 text-muted-foreground hover:text-foreground transition-all"
+            className={`w-6 h-6 transition-all ${isReels ? "text-white/60 hover:text-white" : "text-muted-foreground hover:text-foreground"}`}
             strokeWidth={1.8}
           />
         </button>
@@ -76,7 +82,7 @@ const BottomNav = ({ onOpenCreate }: BottomNavProps) => {
         {/* Reels */}
         <Link to="/reels" className="flex flex-col items-center gap-0.5 p-2 min-w-[52px] transition-transform active:scale-90">
           <PlaySquare
-            className={`w-6 h-6 transition-all ${isActive("/reels") ? "text-foreground" : "text-muted-foreground"}`}
+            className={`w-6 h-6 transition-all ${getIconColor("/reels")}`}
             strokeWidth={isActive("/reels") ? 2.5 : 1.8}
           />
         </Link>
@@ -85,7 +91,7 @@ const BottomNav = ({ onOpenCreate }: BottomNavProps) => {
 
         {/* Profile */}
         <Link to="/profile" className="flex flex-col items-center gap-0.5 p-2 min-w-[52px] transition-transform active:scale-90">
-          <Avatar className={`w-7 h-7 ring-2 transition-all ${isActive("/profile") ? "ring-foreground ring-offset-1 ring-offset-background" : "ring-transparent"}`}>
+          <Avatar className={`w-7 h-7 ring-2 transition-all ${isActive("/profile") ? (isReels ? "ring-white ring-offset-1 ring-offset-black/50" : "ring-foreground ring-offset-1 ring-offset-background") : "ring-transparent"}`}>
             <AvatarImage src={avatarUrl} className="object-cover" />
             <AvatarFallback className="bg-foreground/10 text-foreground text-xs font-bold">
               {displayName[0]?.toUpperCase()}

@@ -443,25 +443,25 @@ const ReelItem = ({
     : "April 2021";
 
   return (
-    <div className={`w-full h-full flex items-center justify-center ${isDark ? "bg-[#000]" : "bg-[#fafafa]"} relative select-none`}>
+    <div className={`w-full h-[100dvh] md:h-full flex items-center justify-center ${isDark ? "bg-[#000]" : "bg-[#fafafa]"} relative select-none`}>
       {showAllLikes && (
         <AllLikesModal postId={reel.id} onClose={() => setShowAllLikes(false)} />
       )}
-      {/*
-        Layout: Video Card centered + Action Icons to the right.
-        Comments/Options panels overlay as floating panels positioned to the right of the video.
-      */}
-      <div className="flex items-end justify-center relative h-[100dvh] md:h-[calc(100vh-20px)] max-h-none w-full md:max-w-[950px] px-0 md:px-4 transition-all duration-300 mx-auto">
+      
+      {/* 1. Main Reel Container (Fullscreen on Mobile) */}
+      <div className="relative w-full h-full md:h-[calc(100vh-20px)] bg-black overflow-hidden md:max-w-[450px] md:rounded-2xl mx-auto md:border md:border-white/10 shadow-2xl group/player">
         
-        {/* Main Video Area */}
-        <div className={`relative w-full md:max-w-[500px] lg:max-w-[600px] h-full bg-black overflow-hidden border-none md:border ${isDark ? "md:border-neutral-800" : "md:border-neutral-200"} shadow-none md:shadow-2xl flex items-center justify-center group/player rounded-none md:rounded-2xl mx-auto`}>
+        {/* Mobile Top Header Overlay */}
+        <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center p-4 pt-10 bg-gradient-to-b from-black/60 to-transparent pointer-events-none md:hidden">
+          <h1 className="text-white text-xl font-bold font-display tracking-wide drop-shadow-md">Reels</h1>
+        </div>
           <video
             ref={videoRef}
             src={reel.image_url}
             loop
             muted={isMuted}
             playsInline
-            className="w-full h-full object-cover cursor-pointer select-none"
+            className="absolute inset-0 w-full h-full object-cover cursor-pointer select-none"
             onClick={togglePlayPause}
           />
 
@@ -494,8 +494,8 @@ const ReelItem = ({
             </div>
           )}
 
-          {/* Left overlapping info (Tapping avatar/username navigates to profile) */}
-          <div className="absolute bottom-4 left-4 right-12 z-10 flex flex-col gap-2 text-left pointer-events-auto">
+          {/* Left overlapping info */}
+          <div className="absolute bottom-[90px] md:bottom-6 left-4 right-16 z-20 flex flex-col gap-2 text-left pointer-events-auto">
             <div className="flex items-center gap-2">
               <Avatar 
                 className="w-8 h-8 ring-1 ring-white/10 shadow-md cursor-pointer hover:opacity-90"
@@ -551,7 +551,95 @@ const ReelItem = ({
           </div>
 
           {/* Bottom edge shadow overlay */}
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none z-0" />
+          <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none z-0" />
+        
+        {/* Right side action icons column (moved INSIDE the video container to overlay) */}
+        <div className="absolute bottom-[90px] md:bottom-6 right-2 z-20 flex flex-col items-center gap-4.5 text-white pointer-events-auto">
+          {/* Like */}
+          <div className="flex flex-col items-center gap-0.5">
+            <button
+              onClick={handleLike}
+              className="p-2.5 rounded-full hover:bg-black/20 transition-all active:scale-90 cursor-pointer drop-shadow-md"
+            >
+              <Heart
+                className={`w-7 h-7 transition-colors ${
+                  liked ? "fill-red-500 text-red-500" : "text-white"
+                }`}
+              />
+            </button>
+            {canSeeLikes && (
+              <span className="text-[11px] font-bold text-white drop-shadow-md">
+                {likesCount > 0 ? likesCount : "Likes"}
+              </span>
+            )}
+          </div>
+
+          {/* Comment */}
+          {!commentsDisabled && (
+            <div className="flex flex-col items-center gap-0.5">
+              <button
+                onClick={() => {
+                  setOptionsOpen(false);
+                  setCommentsOpen(!commentsOpen);
+                }}
+                className="p-2.5 rounded-full hover:bg-black/20 transition-all active:scale-90 cursor-pointer drop-shadow-md"
+              >
+                <MessageCircle className="w-7 h-7 text-white" style={{ transform: "scaleX(-1)" }} />
+              </button>
+              <span className="text-[11px] font-bold text-white drop-shadow-md">{comments.length}</span>
+            </div>
+          )}
+
+          {/* Share */}
+          <div className="flex flex-col items-center gap-0.5">
+            <button
+              onClick={() => setShareDialogOpen(true)}
+              className="p-2.5 rounded-full hover:bg-black/20 transition-all active:scale-90 cursor-pointer drop-shadow-md"
+            >
+              <svg
+                aria-label="Share"
+                className="text-white fill-current"
+                height="24"
+                viewBox="0 0 24 24"
+                width="24"
+              >
+                <line fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2" x1="22" x2="9.218" y1="3" y2="10.083" />
+                <polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" strokeLinejoin="round" strokeWidth="2" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Save */}
+          <button
+            onClick={handleSave}
+            className="p-2.5 rounded-full hover:bg-black/20 transition-all active:scale-90 cursor-pointer drop-shadow-md"
+          >
+            <Bookmark className={`w-7 h-7 ${isSaved ? "fill-white text-white" : "text-white"}`} />
+          </button>
+
+          {/* 3-Dots Menu */}
+          <button
+            onClick={() => {
+              setCommentsOpen(false);
+              setOptionsOpen(!optionsOpen);
+              setOptionsView("menu");
+            }}
+            className="p-2.5 rounded-full hover:bg-black/20 transition-all active:scale-90 cursor-pointer drop-shadow-md"
+          >
+            <MoreHorizontal className="w-7 h-7 text-white" />
+          </button>
+
+          {/* Audio small square picture */}
+          <div className="w-8 h-8 rounded-md overflow-hidden border-2 border-white scale-90 shadow-lg flex-shrink-0 bg-neutral-900 mt-2">
+            {authorAvatar ? (
+              <img src={authorAvatar} className="w-full h-full object-cover animate-spin-slow" style={{ animationDuration: '4s' }} alt="" />
+            ) : (
+              <div className="w-full h-full bg-neutral-800 flex items-center justify-center text-[9px] font-bold text-white">
+                {displayName.slice(0, 2).toUpperCase()}
+              </div>
+            )}
+          </div>
+        </div>
         </div>
 
         {/* 2. Floating Comments Panel — overlaid to the right of the video card */}
@@ -873,94 +961,7 @@ const ReelItem = ({
 
 
 
-        {/* 4. Right side action icons column */}
-        <div className={`flex flex-col items-center gap-4.5 ml-3 ${isDark ? "text-white" : "text-black"} z-10 select-none pb-2`}>
-          {/* Like */}
-          <div className="flex flex-col items-center gap-0.5">
-            <button
-              onClick={handleLike}
-              className={`p-2.5 rounded-full ${isDark ? "hover:bg-neutral-900/60" : "hover:bg-neutral-200/60"} transition-all active:scale-90 cursor-pointer`}
-            >
-              <Heart
-                className={`w-6 h-6 transition-colors ${
-                  liked ? "fill-red-500 text-red-500" : (isDark ? "text-white" : "text-black")
-                }`}
-              />
-            </button>
-            {canSeeLikes && (
-              <span className={`text-[10px] font-semibold ${isDark ? "text-white/90" : "text-black/90"}`}>
-                {likesCount > 0 ? likesCount : "Likes"}
-              </span>
-            )}
-          </div>
-
-          {/* Comment */}
-          {!commentsDisabled && (
-            <div className="flex flex-col items-center gap-0.5">
-              <button
-                onClick={() => {
-                  setOptionsOpen(false); // close options if comments opens
-                  setCommentsOpen(!commentsOpen);
-                }}
-                className={`p-2.5 rounded-full ${isDark ? "hover:bg-neutral-900/60" : "hover:bg-neutral-200/60"} transition-all active:scale-90 cursor-pointer`}
-              >
-                <MessageCircle className={`w-6 h-6 ${isDark ? "text-white" : "text-black"}`} />
-              </button>
-              <span className={`text-[10px] font-semibold ${isDark ? "text-white/90" : "text-black/90"}`}>{comments.length}</span>
-            </div>
-          )}
-
-          {/* Share (Paper Plane to open direct ShareDialog - No share count text) */}
-          <div className="flex flex-col items-center gap-0.5">
-            <button
-              onClick={() => setShareDialogOpen(true)}
-              className={`p-2.5 rounded-full ${isDark ? "hover:bg-neutral-900/60" : "hover:bg-neutral-200/60"} transition-all active:scale-90 cursor-pointer`}
-            >
-              <svg
-                aria-label="Share"
-                className={isDark ? "text-white fill-current" : "text-black fill-current"}
-                height="22"
-                viewBox="0 0 24 24"
-                width="22"
-              >
-                <line fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2" x1="22" x2="9.218" y1="3" y2="10.083" />
-                <polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Save */}
-          <button
-            onClick={handleSave}
-            className={`p-2.5 rounded-full ${isDark ? "hover:bg-neutral-900/60" : "hover:bg-neutral-200/60"} transition-all active:scale-90 cursor-pointer`}
-          >
-            <Bookmark className={`w-6 h-6 ${isSaved ? (isDark ? "fill-white text-white" : "fill-black text-black") : (isDark ? "text-white" : "text-black")}`} />
-          </button>
-
-          {/* 3-Dots Menu */}
-          <button
-            onClick={() => {
-              setCommentsOpen(false); // close comments if options opens
-              setOptionsOpen(!optionsOpen);
-              setOptionsView("menu");
-            }}
-            className={`p-2.5 rounded-full ${isDark ? "hover:bg-neutral-900/60" : "hover:bg-neutral-200/60"} transition-all active:scale-90 cursor-pointer`}
-          >
-            <MoreHorizontal className={`w-6 h-6 ${isDark ? "text-white" : "text-black"}`} />
-          </button>
-
-          {/* Audio small square picture */}
-          <div className="w-8 h-8 rounded-md overflow-hidden border border-white/20 scale-95 shadow-md flex-shrink-0 bg-neutral-900">
-            {authorAvatar ? (
-              <img src={authorAvatar} className="w-full h-full object-cover" alt="" />
-            ) : (
-              <div className="w-full h-full bg-neutral-800 flex items-center justify-center text-[9px] font-bold text-white">
-                {displayName.slice(0, 2).toUpperCase()}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Closing out old wrapper */}
 
       {/* 5. Direct ShareDialog popup */}
       {shareDialogOpen && (
