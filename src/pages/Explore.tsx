@@ -145,7 +145,12 @@ const Explore = () => {
     // CSS Grid can handle this nicely with auto-rows.
     return (
       <div className="grid grid-cols-3 gap-[1px] md:gap-6 auto-rows-[130px] md:auto-rows-[250px]">
-        {posts.map((post, i) => {
+        {posts
+          .filter((post) => {
+            const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+            return isMobile ? post.media_type !== "video" : true;
+          })
+          .map((post, i) => {
           // Dynamic row span for variety
           const isVideo = post.media_type === "video";
           const thumb = getThumb(post);

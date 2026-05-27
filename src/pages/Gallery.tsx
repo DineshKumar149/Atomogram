@@ -142,9 +142,14 @@ const Gallery = () => {
                 <p className="text-sm text-muted-foreground font-medium mt-2">When you or others upload photos or videos, they will appear here.</p>
               </div>
             ) : (
-              media.map((item) => (
-                <FeedPostItem key={item.id} item={item} currentUser={user} />
-              ))
+              media
+                .filter((item) => {
+                  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+                  return isMobile ? item.media_type !== "video" : true;
+                })
+                .map((item) => (
+                  <FeedPostItem key={item.id} item={item} currentUser={user} />
+                ))
             )}
           </div>
         </div>
