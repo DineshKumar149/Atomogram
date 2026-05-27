@@ -48,6 +48,7 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
   const [caption, setCaption] = useState("");
   const [hideLikes, setHideLikes] = useState(false);
   const [turnOffCommenting, setTurnOffCommenting] = useState(false);
+  const [highQualityUpload, setHighQualityUpload] = useState(true);
   const [altText, setAltText] = useState("");
   const [musicTitle, setMusicTitle] = useState("");
   const [selectedMusic, setSelectedMusic] = useState<Track | null>(null);
@@ -94,6 +95,7 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
     setCaption("");
     setHideLikes(false);
     setTurnOffCommenting(false);
+    setHighQualityUpload(true);
     setAltText("");
     setMusicTitle("");
     setSelectedMusic(null);
@@ -510,7 +512,24 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
                               onCheckedChange={setTurnOffCommenting}
                             />
                           </div>
-                          <div className="space-y-2">
+                          
+                          {/* High Quality Upload Setting */}
+                          <div className="flex items-center justify-between border-t border-border/20 pt-4 mt-4">
+                            <div className="flex flex-col max-w-[80%]">
+                              <span className="text-sm font-semibold text-foreground">
+                                Upload at highest quality
+                              </span>
+                              <span className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                                Always upload the highest quality photos and videos, even if uploading takes longer. When this is off, we'll automatically adjust upload quality to fit network conditions.
+                              </span>
+                            </div>
+                            <Switch
+                              checked={highQualityUpload}
+                              onCheckedChange={setHighQualityUpload}
+                            />
+                          </div>
+                          
+                          <div className="space-y-2 pt-4 border-t border-border/20">
                             <span className="text-sm font-semibold text-foreground">
                               Accessibility
                             </span>
