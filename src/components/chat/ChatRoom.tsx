@@ -179,8 +179,12 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   };
 
   const loadConv = useCallback(async () => {
-    const { data } = await supabase.from("conversations").select("type, name, avatar_url, wallpaper_url").eq("id", conversationId).maybeSingle();
+    const { data } = await supabase.from("conversations").select("type, name, avatar_url, wallpaper_url, vanish_mode_enabled, vanish_timer_seconds").eq("id", conversationId).maybeSingle();
     setConv(data as any);
+    if (data) {
+      setVanishMode(!!data.vanish_mode_enabled);
+      setVanishTimerSeconds(data.vanish_timer_seconds ?? 0);
+    }
     const { count } = await supabase.from("conversation_participants").select("user_id", { count: "exact", head: true }).eq("conversation_id", conversationId);
     setParticipantCount(count ?? 0);
   }, [conversationId]);
@@ -779,6 +783,17 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
     const interval = setInterval(() => setTick(t => t + 1), 5000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const now = new Date();
+    const pendingToPublish = messages.filter(m => m.status === "scheduled" && m.scheduled_for && new Date(m.scheduled_for) <= now && m.user_id === user.id);
+    if (pendingToPublish.length > 0) {
+      pendingToPublish.forEach(async (m) => {
+        await supabase.from("messages").update({ status: "published", scheduled_for: null }).eq("id", m.id);
+      });
+    }
+  }, [tick, messages, user]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -1785,7 +1800,10 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
                         <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
                           <EyeOff className="w-4 h-4" /> Vanish Mode
                         </div>
-                        <Switch checked={vanishMode} onCheckedChange={setVanishMode} className="data-[state=checked]:bg-destructive" />
+                        <Switch checked={vanishMode} onCheckedChange={(v) => {
+                          setVanishMode(v);
+                          supabase.from("conversations").update({ vanish_mode_enabled: v }).eq("id", conversationId).then();
+                        }} className="data-[state=checked]:bg-destructive" />
                       </div>
                       {vanishMode && (
                         <div className="flex items-center justify-between gap-2 mt-1 px-1">
@@ -1793,7 +1811,11 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
                           <select 
                             className="bg-secondary/50 text-xs rounded-md px-2 py-1 border-none focus:ring-0 text-foreground w-[120px] shadow-sm font-semibold cursor-pointer"
                             value={vanishTimerSeconds}
-                            onChange={(e) => setVanishTimerSeconds(Number(e.target.value))}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              setVanishTimerSeconds(val);
+                              supabase.from("conversations").update({ vanish_timer_seconds: val }).eq("id", conversationId).then();
+                            }}
                           >
                             <option value={0}>On Close</option>
                             <option value={10}>10 Seconds</option>
