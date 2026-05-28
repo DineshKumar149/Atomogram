@@ -22,9 +22,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import { ADMIN_EMAIL } from "@/lib/admin";
 import GroupSettings from "./GroupSettings";
-import UserProfileModal from "@/components/shared/UserProfileModal";
 import CallScreen from "./CallScreen";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
 
 interface Msg {
   id: string;
@@ -73,8 +73,8 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   
-  const [profileModalUserId, setProfileModalUserId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [reads, setReads] = useState<Read[]>([]);
@@ -1337,7 +1337,7 @@ const renderText = (text: string) => {
           <div className="relative">
             <Avatar className="w-[46px] h-[46px] border border-border/50 shadow-sm cursor-pointer hover:opacity-90 transition-opacity" onClick={() => {
               if (conv?.type !== "group") {
-                if (otherUserProfile?.user_id) setProfileModalUserId(otherUserProfile.user_id);
+                if (otherUserProfile?.user_id) navigate(`/profile/${otherUserProfile.user_id}`);
               } else {
                 setDetailsOpen(true);
               }
@@ -1351,7 +1351,7 @@ const renderText = (text: string) => {
           </div>
           <div className="flex flex-col cursor-pointer" onClick={() => {
               if (conv?.type !== "group") {
-                if (otherUserProfile?.user_id) setProfileModalUserId(otherUserProfile.user_id);
+                if (otherUserProfile?.user_id) navigate(`/profile/${otherUserProfile.user_id}`);
               } else {
                 setDetailsOpen(true);
               }
@@ -1555,7 +1555,7 @@ const renderText = (text: string) => {
               {!isMe && (
                 <Avatar 
                   className={`w-8 h-8 mt-auto shadow-sm transition-opacity hover:scale-105 ${isMobile ? "cursor-pointer hover:opacity-80" : ""}`}
-                  onClick={() => { if (isMobile) setProfileModalUserId(m.user_id); }}
+                  onClick={() => { if (isMobile) navigate(`/profile/${m.user_id}`); }}
                 >
                   {prof?.avatar_url && <AvatarImage src={prof.avatar_url} />}
                   <AvatarFallback className="text-[11px] font-semibold">{(prof?.display_name ?? "?").slice(0, 2).toUpperCase()}</AvatarFallback>
@@ -1565,7 +1565,7 @@ const renderText = (text: string) => {
                 {!isMe && (
                   <div 
                     className={`text-[11px] text-muted-foreground mb-1 ml-1 font-medium ${isMobile ? "cursor-pointer hover:underline decoration-primary" : ""}`}
-                    onClick={() => { if (isMobile) setProfileModalUserId(m.user_id); }}
+                    onClick={() => { if (isMobile) navigate(`/profile/${m.user_id}`); }}
                   >
                     {prof?.display_name ?? "Member"}
                   </div>
@@ -2258,7 +2258,7 @@ const renderText = (text: string) => {
                             const p = profiles[uid];
                             return (
                                 <div key={uid} className="flex items-center justify-between p-2 rounded-xl hover:bg-secondary/40 transition-colors border border-transparent hover:border-border/50">
-                                    <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => { setDetailsOpen(false); setProfileModalUserId(uid); }}>
+                                    <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => { setDetailsOpen(false); navigate(`/profile/${uid}`); }}>
                                         <Avatar className="w-9 h-9 shadow-sm"><AvatarImage src={p?.avatar_url || ""} /><AvatarFallback>{(p?.display_name || "?").slice(0,2)}</AvatarFallback></Avatar>
                                         <span className="font-medium text-[15px] hover:underline decoration-primary">{p?.display_name || "Unknown User"}</span>
                                     </div>
@@ -2336,16 +2336,7 @@ const renderText = (text: string) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {/* User Profile Modal */}
-      {profileModalUserId && (
-        <UserProfileModal
-          userId={profileModalUserId}
-          onClose={() => setProfileModalUserId(null)}
-          onStartChat={(uid) => {
-            setProfileModalUserId(null);
-          }}
-        />
-      )}
+      {/* Removed User Profile Modal */}
 
       {secureViewMessage && (
         <div 
