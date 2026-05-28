@@ -17,6 +17,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { ADMIN_EMAIL } from "@/lib/admin";
@@ -1357,54 +1358,76 @@ const renderText = (text: string) => {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Button size="icon" variant="ghost" className={`h-10 w-10 rounded-full hover:bg-secondary ${searchOpen ? 'bg-secondary text-foreground' : 'text-muted-foreground'}`} onClick={() => { setSearchOpen(o => !o); setSearchQuery(""); }}><Search className="w-5 h-5" /></Button>
-          {conv?.type !== "group" && (
-            <>
-              <Button 
-                size="icon" 
-                variant="ghost" 
-                className={`h-10 w-10 rounded-full hover:bg-secondary text-muted-foreground transition-all duration-200 ${isBlocked ? 'opacity-40 cursor-not-allowed' : ''}`}
-                onClick={() => {
-                  if (isBlockedByTarget) {
-                    toast({ title: "Call failed", description: "You cannot contact this user.", variant: "destructive" });
-                  } else if (hasBlockedTarget) {
-                    toast({ title: "Call failed", description: "Unblock this user to make calls.", variant: "destructive" });
-                  } else {
-                    initiateCall("audio");
-                  }
-                }}
-              >
-                <Phone className="w-[22px] h-[22px]" />
-              </Button>
-              <Button 
-                size="icon" 
-                variant="ghost" 
-                className={`h-10 w-10 rounded-full hover:bg-secondary text-muted-foreground transition-all duration-200 ${isBlocked ? 'opacity-40 cursor-not-allowed' : ''}`}
-                onClick={() => {
-                  if (isBlockedByTarget) {
-                    toast({ title: "Call failed", description: "You cannot contact this user.", variant: "destructive" });
-                  } else if (hasBlockedTarget) {
-                    toast({ title: "Call failed", description: "Unblock this user to make calls.", variant: "destructive" });
-                  } else {
-                    initiateCall("video");
-                  }
-                }}
-              >
-                <Video className="w-[24px] h-[24px]" />
-              </Button>
-            </>
-          )}
-          {/* Info / Details icon */}
-          <Button
-            size="icon"
-            variant="ghost"
-            className={`h-10 w-10 rounded-full hover:bg-secondary ${detailsOpen ? 'text-foreground bg-secondary' : 'text-muted-foreground'}`}
-            onClick={() => setDetailsOpen((o) => !o)}
-          >
-            <Info className="w-[22px] h-[22px]" />
-          </Button>
-        </div>
+        <div className="flex items-center text-muted-foreground">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="icon" variant="ghost" className="h-10 w-10 rounded-full hover:bg-secondary transition-colors focus-visible:ring-0">
+                    <Menu className="w-6 h-6 text-foreground/80" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 z-[70] rounded-2xl shadow-xl border-border/40 p-1.5">
+                  <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => { setSearchOpen(o => !o); setSearchQuery(""); }}>
+                    <Search className="w-[18px] h-[18px] mr-3 text-muted-foreground" />
+                    <span className="font-semibold text-sm">Search Messages</span>
+                  </DropdownMenuItem>
+                  
+                  {conv?.type !== "group" && (
+                    <>
+                      <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => {
+                        if (isBlockedByTarget) toast({ title: "Call failed", description: "You cannot contact this user.", variant: "destructive" });
+                        else if (hasBlockedTarget) toast({ title: "Call failed", description: "Unblock this user to make calls.", variant: "destructive" });
+                        else initiateCall("audio");
+                      }}>
+                        <Phone className="w-[18px] h-[18px] mr-3 text-muted-foreground" />
+                        <span className="font-semibold text-sm">Voice Call</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => {
+                        if (isBlockedByTarget) toast({ title: "Call failed", description: "You cannot contact this user.", variant: "destructive" });
+                        else if (hasBlockedTarget) toast({ title: "Call failed", description: "Unblock this user to make calls.", variant: "destructive" });
+                        else initiateCall("video");
+                      }}>
+                        <Video className="w-[18px] h-[18px] mr-3 text-muted-foreground" />
+                        <span className="font-semibold text-sm">Video Call</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  
+                  <DropdownMenuSeparator className="bg-border/40 my-1" />
+                  
+                  <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => mediaRef.current?.click()}>
+                    <ImageIcon className="w-[18px] h-[18px] mr-3 text-primary" />
+                    <span className="font-semibold text-sm">Send Media</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => setShowScheduledView(!showScheduledView)}>
+                    <CalendarClock className="w-[18px] h-[18px] mr-3 text-orange-500" />
+                    <span className="font-semibold text-sm">Schedule Message</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={(e) => {
+                     e.preventDefault();
+                     const nv = !vanishMode;
+                     setVanishMode(nv);
+                     supabase.from("conversations").update({ vanish_mode_enabled: nv }).eq("id", conversationId).then();
+                  }}>
+                    {vanishMode ? <Eye className="w-[18px] h-[18px] mr-3 text-destructive" /> : <Ghost className="w-[18px] h-[18px] mr-3 text-muted-foreground" />}
+                    <span className={`font-semibold text-sm ${vanishMode ? "text-destructive" : ""}`}>{vanishMode ? "Disable Vanish Mode" : "Vanish Mode"}</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator className="bg-border/40 my-1" />
+                  
+                  <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => setDetailsOpen(true)}>
+                    <Info className="w-[18px] h-[18px] mr-3 text-muted-foreground" />
+                    <span className="font-semibold text-sm">Chat Info</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-destructive/10 text-destructive focus:text-destructive transition-colors" onClick={() => executeClearChat()}>
+                    <Trash2 className="w-[18px] h-[18px] mr-3" />
+                    <span className="font-semibold text-sm">Clear Chat</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
       </div>
 
       {searchOpen && (
@@ -1882,11 +1905,7 @@ const renderText = (text: string) => {
                 </Popover>
             )}
 
-            {!recording && !voicePreview && (
-              <Button type="button" size="icon" variant="ghost" className="rounded-full h-10 w-10 shrink-0 hover:bg-background/80" onClick={() => mediaRef.current?.click()} disabled={isBlocked}>
-                <Paperclip className="w-[20px] h-[20px] text-muted-foreground" />
-              </Button>
-            )}
+            
 
             {recording ? (
                 <div className="flex-1 flex items-center gap-3 px-4 h-full">
@@ -1926,64 +1945,7 @@ const renderText = (text: string) => {
                   return null;
                 })()}
 
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button type="button" size="icon" variant="ghost" className="rounded-full h-[52px] w-[52px] shrink-0 text-muted-foreground hover:bg-secondary/80">
-                      <MoreHorizontal className="w-6 h-6" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[280px] p-3 mb-2 shadow-xl border-border rounded-2xl flex flex-col gap-3" side="top" align="center">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
-                          <EyeOff className="w-4 h-4" /> Vanish Mode
-                        </div>
-                        <Switch checked={vanishMode} onCheckedChange={(v) => {
-                          setVanishMode(v);
-                          supabase.from("conversations").update({ vanish_mode_enabled: v }).eq("id", conversationId).then();
-                        }} className="data-[state=checked]:bg-destructive" />
-                      </div>
-                      {vanishMode && (
-                        <div className="flex items-center justify-between gap-2 mt-1 px-1">
-                          <span className="text-xs text-muted-foreground font-medium flex-1">Disappear after:</span>
-                          <select 
-                            className="bg-secondary/50 text-xs rounded-md px-2 py-1 border-none focus:ring-0 text-foreground w-[120px] shadow-sm font-semibold cursor-pointer"
-                            value={vanishTimerSeconds}
-                            onChange={(e) => {
-                              const val = Number(e.target.value);
-                              setVanishTimerSeconds(val);
-                              supabase.from("conversations").update({ vanish_timer_seconds: val }).eq("id", conversationId).then();
-                            }}
-                          >
-                            <option value={0}>On Close</option>
-                            <option value={10}>10 Seconds</option>
-                            <option value={60}>1 Minute</option>
-                            <option value={3600}>1 Hour</option>
-                            <option value={86400}>24 Hours</option>
-                          </select>
-                        </div>
-                      )}
-                    </div>
-                    <div className="w-full h-px bg-border/50" />
-                    <div className="flex flex-col gap-2">
-                      <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Schedule Message</span>
-                      <div className="flex gap-2">
-                        <Input type="date" value={scheduledForDate} onChange={e => setScheduledForDate(e.target.value)} min={new Date().toISOString().split('T')[0]} className="h-8 text-xs flex-1 bg-secondary/50 border-none" />
-                        <Input type="time" value={scheduledForTime} onChange={e => setScheduledForTime(e.target.value)} className="h-8 text-xs flex-[0.7] bg-secondary/50 border-none" />
-                      </div>
-                      {(scheduledForDate || scheduledForTime) && (
-                          <Button size="sm" variant="ghost" onClick={() => { setScheduledForDate(""); setScheduledForTime(""); }} className="h-7 text-[11px] text-muted-foreground">Clear Schedule</Button>
-                        )}
-                      </div>
-                      <div className="w-full h-px bg-border/50" />
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                          <BellOff className="w-3.5 h-3.5" /> Send without sound
-                        </span>
-                        <Switch checked={isSilent} onCheckedChange={setIsSilent} />
-                      </div>
-                    </PopoverContent>
-                </Popover>
+                
 
                 {pendingMedia.length > 0 && (
                   <Button
