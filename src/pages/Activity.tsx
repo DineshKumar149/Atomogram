@@ -153,46 +153,57 @@ export default function Activity() {
   };
 
   return (
-    <div className={`flex h-[100dvh] overflow-hidden ${isDark ? "bg-black text-white" : "bg-white text-black"}`}>
-      {/* LEFT PANEL */}
-      <div style={{ width: 300, borderRight: isDark ? "1px solid #262626" : "1px solid #e5e5e5", flexShrink: 0, padding: "32px 0 0", display: "flex", flexDirection: "column" }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700, padding: "0 24px 24px", color: isDark ? "#fff" : "#000" }}>Your activity</h2>
+    <div className={`flex flex-col md:flex-row h-[100dvh] overflow-hidden ${isDark ? "bg-black text-white" : "bg-white text-black"}`}>
+      {/* LEFT/TOP PANEL */}
+      <div className={`w-full md:w-[300px] shrink-0 flex flex-col pt-4 md:pt-8 ${isDark ? "border-b md:border-b-0 md:border-r border-[#262626]" : "border-b md:border-b-0 md:border-r border-[#e5e5e5]"}`}>
+        <h2 className="text-[22px] font-bold px-4 md:px-6 pb-2 md:pb-6">Your activity</h2>
 
-        {/* Interactions */}
-        <button
-          onClick={() => setSection("interactions")}
-          style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "14px 24px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", width: "100%" }}
-        >
-          <ArrowLeftRight size={22} color={section === "interactions" ? (isDark ? "#e0e0e0" : "#000") : "#888"} style={{ marginTop: 2, flexShrink: 0 }} />
-          <div>
-            <p style={{ fontSize: 15, fontWeight: 600, color: section === "interactions" ? "#4db3ff" : (isDark ? "#fff" : "#000"), marginBottom: 2 }}>Interactions</p>
-            <p style={{ fontSize: 12, color: "#888", lineHeight: 1.4 }}>Review and delete likes, comments, and your other interactions.</p>
-          </div>
-        </button>
+        <div className="flex md:flex-col overflow-x-auto md:overflow-visible px-2 md:px-0 [&::-webkit-scrollbar]:hidden" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
+          {/* Interactions */}
+          <button
+            onClick={() => setSection("interactions")}
+            className={`flex items-center md:items-start gap-2 md:gap-3 px-3 md:px-6 py-3 rounded-xl md:rounded-none transition-colors whitespace-nowrap ${section === "interactions" ? (isDark ? "bg-[#262626]" : "bg-gray-100") : ""}`}
+          >
+            <ArrowLeftRight size={20} className={`shrink-0 ${section === "interactions" ? "text-blue-500" : "text-gray-400"}`} />
+            <div className="text-left hidden md:block">
+              <p className={`text-[15px] font-semibold mb-0.5 ${section === "interactions" ? "text-blue-500" : ""}`}>Interactions</p>
+              <p className="text-[12px] text-gray-500 leading-[1.4] whitespace-normal">Review and delete likes, comments, and your other interactions.</p>
+            </div>
+            <div className="text-left block md:hidden">
+              <p className={`text-[14px] font-semibold ${section === "interactions" ? "text-blue-500" : ""}`}>Interactions</p>
+            </div>
+          </button>
 
-        {/* Photos and videos */}
-        <button
-          onClick={() => setSection("photos")}
-          style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "14px 24px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", width: "100%" }}
-        >
-          <Images size={22} color={section === "photos" ? (isDark ? "#e0e0e0" : "#000") : "#888"} style={{ marginTop: 2, flexShrink: 0 }} />
-          <div>
-            <p style={{ fontSize: 15, fontWeight: 600, color: section === "photos" ? "#4db3ff" : (isDark ? "#fff" : "#000"), marginBottom: 2 }}>Photos and videos</p>
-            <p style={{ fontSize: 12, color: "#888", lineHeight: 1.4 }}>View, archive or delete photos and videos you've shared.</p>
-          </div>
-        </button>
+          {/* Photos and videos */}
+          <button
+            onClick={() => setSection("photos")}
+            className={`flex items-center md:items-start gap-2 md:gap-3 px-3 md:px-6 py-3 rounded-xl md:rounded-none transition-colors whitespace-nowrap ${section === "photos" ? (isDark ? "bg-[#262626]" : "bg-gray-100") : ""}`}
+          >
+            <Images size={20} className={`shrink-0 ${section === "photos" ? "text-blue-500" : "text-gray-400"}`} />
+            <div className="text-left hidden md:block">
+              <p className={`text-[15px] font-semibold mb-0.5 ${section === "photos" ? "text-blue-500" : ""}`}>Photos and videos</p>
+              <p className="text-[12px] text-gray-500 leading-[1.4] whitespace-normal">View, archive or delete photos and videos you've shared.</p>
+            </div>
+            <div className="text-left block md:hidden">
+              <p className={`text-[14px] font-semibold ${section === "photos" ? "text-blue-500" : ""}`}>Photos</p>
+            </div>
+          </button>
 
-        {/* Account history */}
-        <button
-          onClick={() => setSection("history")}
-          style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "14px 24px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", width: "100%" }}
-        >
-          <CalendarClock size={22} color={section === "history" ? (isDark ? "#e0e0e0" : "#000") : "#888"} style={{ marginTop: 2, flexShrink: 0 }} />
-          <div>
-            <p style={{ fontSize: 15, fontWeight: 600, color: section === "history" ? "#4db3ff" : (isDark ? "#fff" : "#000"), marginBottom: 2 }}>Account history</p>
-            <p style={{ fontSize: 12, color: "#888", lineHeight: 1.4 }}>Review changes you've made to your account since you created it.</p>
-          </div>
-        </button>
+          {/* Account history */}
+          <button
+            onClick={() => setSection("history")}
+            className={`flex items-center md:items-start gap-2 md:gap-3 px-3 md:px-6 py-3 rounded-xl md:rounded-none transition-colors whitespace-nowrap ${section === "history" ? (isDark ? "bg-[#262626]" : "bg-gray-100") : ""}`}
+          >
+            <CalendarClock size={20} className={`shrink-0 ${section === "history" ? "text-blue-500" : "text-gray-400"}`} />
+            <div className="text-left hidden md:block">
+              <p className={`text-[15px] font-semibold mb-0.5 ${section === "history" ? "text-blue-500" : ""}`}>Account history</p>
+              <p className="text-[12px] text-gray-500 leading-[1.4] whitespace-normal">Review changes you've made to your account since you created it.</p>
+            </div>
+            <div className="text-left block md:hidden">
+              <p className={`text-[14px] font-semibold ${section === "history" ? "text-blue-500" : ""}`}>History</p>
+            </div>
+          </button>
+        </div>
       </div>
 
       {/* MAIN CONTENT */}
@@ -202,7 +213,7 @@ export default function Activity() {
         {section === "interactions" && (
           <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
             {/* Tabs */}
-            <div style={{ display: "flex", borderBottom: isDark ? "1px solid #262626" : "1px solid #e5e5e5", padding: "0 24px" }}>
+            <div className={`flex overflow-x-auto no-scrollbar px-4 md:px-6 ${isDark ? "border-b border-[#262626]" : "border-b border-[#e5e5e5]"}`} style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
               {(["likes", "comments", "reposts"] as InteractionTab[]).map(tab => (
                 <button
                   key={tab}
@@ -216,7 +227,8 @@ export default function Activity() {
                     background: "transparent", border: "none", borderBottomStyle: "solid",
                     borderBottomWidth: 2,
                     borderBottomColor: interactionTab === tab ? (isDark ? "#fff" : "#000") : "transparent",
-                    cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.5px"
+                    cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.5px",
+                    whiteSpace: "nowrap"
                   }}
                 >
                   {tab === "likes" && <Heart size={14} />}
@@ -309,7 +321,7 @@ export default function Activity() {
         {section === "photos" && (
           <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
             {/* Tabs */}
-            <div style={{ display: "flex", borderBottom: isDark ? "1px solid #262626" : "1px solid #e5e5e5", padding: "0 24px" }}>
+            <div className={`flex overflow-x-auto no-scrollbar px-4 md:px-6 ${isDark ? "border-b border-[#262626]" : "border-b border-[#e5e5e5]"}`} style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
               {(["posts", "reels", "highlights"] as PhotoTab[]).map(tab => (
                 <button
                   key={tab}
@@ -322,8 +334,9 @@ export default function Activity() {
                     borderBottomColor: photoTab === tab ? (isDark ? "#fff" : "#000") : "transparent",
                     background: "transparent", border: "none",
                     borderBottom: photoTab === tab ? `2px solid ${isDark ? "#fff" : "#000"}` : "2px solid transparent",
-                    cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.5px"
-                  } as React.CSSProperties}
+                    cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.5px",
+                    whiteSpace: "nowrap"
+                  }}
                 >
                   {tab === "posts" && <Images size={14} />}
                   {tab === "reels" && <Repeat2 size={14} />}

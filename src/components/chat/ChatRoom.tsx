@@ -1940,7 +1940,7 @@ const renderText = (text: string) => {
                   disabled={isBlocked}
                   rows={1}
                   style={{ minHeight: '44px', maxHeight: '120px' }}
-                  className="border-none bg-transparent shadow-none focus-visible:ring-0 w-full text-[16px] px-1 py-[11px] font-medium placeholder:text-muted-foreground resize-none overflow-y-auto"
+                  className="border-none bg-transparent shadow-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:outline-none w-full text-[16px] px-1 py-[11px] font-medium placeholder:text-muted-foreground resize-none overflow-y-auto"
                 />
             )}
 
