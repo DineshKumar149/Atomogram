@@ -80,6 +80,9 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   const [participantCount, setParticipantCount] = useState(0);
   const [text, setText] = useState("");
   const [reply, setReply] = useState<Msg | null>(null);
+  const [editingMessage, setEditingMessage] = useState<Msg | null>(null);
+  const [isSilent, setIsSilent] = useState(false);
+  const touchStartRef = useRef<{ id: string; x: number }>({ id: "", x: 0 });
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [pendingMedia, setPendingMedia] = useState<PendingMedia[]>([]);
   
@@ -166,6 +169,38 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   const rtcChannel = useRef<ReturnType<typeof supabase.channel> | null>(null);
   
   const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
+
+  const handleTouchStart = (e: React.TouchEvent, id: string) => {
+    touchStartRef.current = { id, x: e.touches[0].clientX };
+  };
+  const handleTouchMove = (e: React.TouchEvent, id: string) => {
+    if (touchStartRef.current.id !== id) return;
+    const deltaX = e.touches[0].clientX - touchStartRef.current.x;
+    const el = document.getElementById(`msg-${id}`);
+    if (el && deltaX < 0 && deltaX > -80) { // swipe left to reply
+       el.style.transform = `translateX(${deltaX}px)`;
+    }
+  };
+  const handleTouchEnd = (e: React.TouchEvent, id: string, msg: any) => {
+    if (touchStartRef.current.id !== id) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const el = document.getElementById(`msg-${id}`);
+    if (el) {
+      if (deltaX < -50) {
+        setReply(msg);
+        setEditingMessage(null);
+        if (navigator.vibrate) navigator.vibrate(50);
+      }
+      el.style.transition = 'transform 0.2s ease-out';
+      el.style.transform = 'translateX(0px)';
+      setTimeout(() => { if (el) el.style.transition = ''; }, 200);
+    }
+    touchStartRef.current = { id: "", x: 0 };
+  };
+
+  const togglePin = async (msg: any) => {
+    await supabase.from("messages").update({ is_pinned: !msg.is_pinned }).eq("id", msg.id);
+  };
 
   const loadProfiles = async (ids: string[]) => {
     const missing = ids.filter((id) => !profiles[id]);
@@ -843,6 +878,26 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   const executeSendMediaAndText = async () => {
     if (!user || isBlocked) return;
     const body = text.trim();
+    
+    // Stop recording if active
+    if (recording) stopRecording();
+
+    if (editingMessage && text.trim()) {
+      setIsUploading(true);
+      try {
+        await supabase.from("messages").update({ content: text.trim(), edited_at: new Date().toISOString() }).eq("id", editingMessage.id);
+        setEditingMessage(null);
+        setText("");
+      } catch (err: any) {
+        toast({ title: "Failed to edit", description: err.message, variant: "destructive" });
+      } finally {
+        setIsUploading(false);
+      }
+      return;
+    }
+
+    if (!body && !voicePreview && !pendingMedia.length) return;
+
     const currentPending = [...pendingMedia];
     const currentReply = reply?.id ?? null;
     let scheduledDt = null;
@@ -888,6 +943,7 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
             file_name: item.type === "pdf" ? item.file.name : null,
             file_size: item.type === "pdf" ? item.file.size : null,
             expires_at: expiresAt,
+            is_silent: isSilent
           });
         }
       }
@@ -1834,10 +1890,17 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
                         <Input type="time" value={scheduledForTime} onChange={e => setScheduledForTime(e.target.value)} className="h-8 text-xs flex-[0.7] bg-secondary/50 border-none" />
                       </div>
                       {(scheduledForDate || scheduledForTime) && (
-                        <Button size="sm" variant="ghost" onClick={() => { setScheduledForDate(""); setScheduledForTime(""); }} className="h-7 text-[11px] text-muted-foreground">Clear Schedule</Button>
-                      )}
-                    </div>
-                  </PopoverContent>
+                          <Button size="sm" variant="ghost" onClick={() => { setScheduledForDate(""); setScheduledForTime(""); }} className="h-7 text-[11px] text-muted-foreground">Clear Schedule</Button>
+                        )}
+                      </div>
+                      <div className="w-full h-px bg-border/50" />
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                          <BellOff className="w-3.5 h-3.5" /> Send without sound
+                        </span>
+                        <Switch checked={isSilent} onCheckedChange={setIsSilent} />
+                      </div>
+                    </PopoverContent>
                 </Popover>
 
                 {pendingMedia.length > 0 && (
