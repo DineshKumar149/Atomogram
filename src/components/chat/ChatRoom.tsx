@@ -87,6 +87,7 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   const [isSilent, setIsSilent] = useState(false);
   const touchStartRef = useRef<{ id: string; x: number, y: number, time: number }>({ id: "", x: 0, y: 0, time: 0 });
   const touchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressFired = useRef(false);
   
   const [forwardModalOpen, setForwardModalOpen] = useState(false);
   const [recentChats, setRecentChats] = useState<any[]>([]);
@@ -2019,7 +2020,9 @@ const renderText = (text: string) => {
                 document.getElementById('long-press-send-trigger')?.click();
               }}
               onTouchStart={(e) => {
+                longPressFired.current = false;
                 touchTimeoutRef.current = setTimeout(() => {
+                  longPressFired.current = true;
                   if (navigator.vibrate) navigator.vibrate(50);
                   document.getElementById('long-press-send-trigger')?.click();
                 }, 500);
@@ -2028,6 +2031,10 @@ const renderText = (text: string) => {
               onTouchMove={() => clearTimeout(touchTimeoutRef.current!)}
               onClick={(e) => {
                 clearTimeout(touchTimeoutRef.current!);
+                if (longPressFired.current) {
+                  e.preventDefault();
+                  return;
+                }
                 if (recording) {
                    stopRecording();
                 } else if (text.trim() || pendingMedia.length > 0 || voicePreview) {
