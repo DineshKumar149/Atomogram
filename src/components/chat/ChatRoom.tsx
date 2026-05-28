@@ -1507,7 +1507,7 @@ const renderText = (text: string) => {
             const repliedTo = findMsg(m.reply_to_id);
             const canDelete = isMe || isAdmin;
             return (
-            <div key={m.id} className={`flex gap-2.5 ${isMe ? "justify-end" : "justify-start"}`}>
+            <div key={m.id} className={`flex gap-2.5 ${isMe ? "justify-end" : "justify-start"} select-none`} style={{ WebkitUserSelect: "none", WebkitTouchCallout: "none" }} onContextMenu={(e) => { e.preventDefault(); if (!isSelectionMode) { setSelectedMessages([m.id]); } else { setSelectedMessages(prev => prev.includes(m.id) ? prev.filter(x => x !== m.id) : [...prev, m.id]); } }}>
               {!isMe && (
                 <Avatar 
                   className="w-8 h-8 mt-auto shadow-sm cursor-pointer hover:opacity-80 transition-opacity hover:scale-105"
@@ -1835,16 +1835,17 @@ const renderText = (text: string) => {
           )}
         </div>
 
-        <div className="p-4 flex items-center gap-3 border-t-0 bg-transparent">
+        <div className="p-2 flex items-end gap-2 border-t-0 bg-transparent mb-2 max-w-[800px] mx-auto w-full">
           <input ref={mediaRef} type="file" accept="image/*,video/*,application/pdf" multiple onChange={(e) => handleStageMedia(e, "document")} className="hidden" />
           <input ref={audioRef} type="file" accept="audio/*" multiple onChange={(e) => handleStageMedia(e, "audio")} className="hidden" />
           
-          <div className="flex-1 relative bg-secondary/50 rounded-[28px] flex items-center border border-border/30 transition-all duration-300 shadow-none px-2 h-[52px]">
+          <div className="flex-1 relative bg-secondary/80 dark:bg-[#2c2c2c] rounded-3xl flex items-end border-none transition-all duration-300 shadow-sm min-h-[44px]">
+            {/* EMOJI BUTTON - INSIDE LEFT */}
             {!recording && !voicePreview && (
                 <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
-                    <Button type="button" size="icon" variant="ghost" className="rounded-full h-10 w-10 shrink-0 hover:bg-background/80" disabled={isBlocked}>
-                      <Smile className="w-[22px] h-[22px] text-muted-foreground" />
+                    <Button type="button" size="icon" variant="ghost" className="rounded-full h-11 w-11 shrink-0 hover:bg-transparent text-muted-foreground self-end" disabled={isBlocked}>
+                      <Smile className="w-[26px] h-[26px]" />
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[360px] p-0 mb-3 shadow-2xl border-border/50 rounded-2xl overflow-hidden" side="top" align="start">
@@ -1905,112 +1906,124 @@ const renderText = (text: string) => {
                 </Popover>
             )}
 
-            
-
+            {/* TEXT INPUT */}
             {recording ? (
-                <div className="flex-1 flex items-center gap-3 px-4 h-full">
+                <div className="flex-1 flex items-center gap-3 px-2 h-11">
                     <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></div>
                     <span className="text-sm font-medium animate-pulse text-red-500">{formatTime(recordTime)}</span>
-                    <span className="text-sm text-muted-foreground ml-2">Recording Voice Note...</span>
+                    <span className="text-[15px] text-muted-foreground ml-2">Slide to cancel &lt;</span>
                 </div>
             ) : voicePreview ? (
-                <div className="flex-1 flex items-center px-4 h-full">
-                   <span className="text-sm text-muted-foreground italic">Preview ready to send</span>
+                <div className="flex-1 flex items-center px-2 h-11">
+                   <span className="text-sm text-muted-foreground italic">Voice note preview...</span>
                 </div>
             ) : (
-                <Input
-                value={text}
-                onChange={(e) => { setText(e.target.value); broadcastTyping(); }}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); executeSendMediaAndText(); } }}
-                placeholder={isBlockedByTarget ? "You cannot contact this user" : hasBlockedTarget ? "You blocked this chat" : "Type your message"}
-                disabled={isBlocked}
-                className="border-none bg-transparent shadow-none focus-visible:ring-0 h-full w-full text-[15px] px-3 font-medium placeholder:text-muted-foreground"
+                <textarea
+                  value={text}
+                  onChange={(e) => { setText(e.target.value); broadcastTyping(); }}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); executeSendMediaAndText(); } }}
+                  placeholder={isBlockedByTarget ? "You cannot contact this user" : hasBlockedTarget ? "You blocked this chat" : "Message"}
+                  disabled={isBlocked}
+                  rows={1}
+                  style={{ minHeight: '44px', maxHeight: '120px' }}
+                  className="border-none bg-transparent shadow-none focus-visible:ring-0 w-full text-[16px] px-1 py-[11px] font-medium placeholder:text-muted-foreground resize-none overflow-y-auto"
                 />
+            )}
+
+            {/* ATTACHMENT BUTTON - INSIDE RIGHT */}
+            {!recording && !voicePreview && (
+              <Button type="button" size="icon" variant="ghost" className="rounded-full h-11 w-11 shrink-0 hover:bg-transparent text-muted-foreground self-end mr-0.5" onClick={() => mediaRef.current?.click()} disabled={isBlocked}>
+                <Paperclip className="w-[24px] h-[24px]" />
+              </Button>
+            )}
+            
+            {/* VIEW ONCE TOGGLE (Optional, keep inside right if media is attached) */}
+            {pendingMedia.length > 0 && !recording && !voicePreview && (
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  if (isBlocked) return;
+                  setViewLimitOption(prev => prev === 0 ? 1 : prev === 1 ? 2 : 0);
+                }}
+                disabled={isBlocked}
+                className={`rounded-full h-11 w-11 shrink-0 transition-all duration-300 relative self-end ${
+                  viewLimitOption > 0 ? "text-primary" : "text-muted-foreground hover:bg-transparent"
+                }`}
+              >
+                {viewLimitOption === 0 ? (
+                  <EyeOff className="w-[20px] h-[20px]" />
+                ) : (
+                  <div className="relative">
+                    <Eye className="w-[20px] h-[20px]" />
+                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
+                      {viewLimitOption}
+                    </span>
+                  </div>
+                )}
+              </Button>
             )}
           </div>
 
-          <div className="flex gap-2">
-            {voicePreview ? null : (
-              <>
-                {(() => {
-                  const pendingScheduled = messages.filter(m => m.status === "scheduled" && m.scheduled_for && new Date(m.scheduled_for) > new Date() && m.user_id === user?.id);
-                  if (pendingScheduled.length > 0) {
-                    return (
-                      <Button type="button" size="icon" variant="ghost" className="rounded-full h-[52px] w-[52px] shrink-0 text-orange-500 hover:bg-secondary/80 relative transition-transform hover:scale-105" onClick={() => setShowScheduledView(true)}>
-                        <Calendar className="w-[24px] h-[24px]" />
-                        <span className="absolute top-2 right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold border-2 border-background shadow-sm">{pendingScheduled.length}</span>
-                      </Button>
-                    );
-                  }
-                  return null;
-                })()}
+          {/* SEND / MIC BUTTON - OUTSIDE RIGHT */}
+          <div className="relative shrink-0 flex items-end pb-0.5">
+            <Popover>
+               <PopoverTrigger asChild>
+                  <button id="long-press-send-trigger" className="hidden" />
+               </PopoverTrigger>
+               <PopoverContent side="top" align="end" className="w-56 p-1.5 rounded-2xl mb-2 shadow-xl border-border/40">
+                  <div className="flex flex-col gap-1">
+                     <button onClick={() => { setIsSilent(true); executeSendMediaAndText(); }} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-secondary w-full text-left transition-colors">
+                        <BellOff className="w-[18px] h-[18px] text-muted-foreground" />
+                        <span className="text-sm font-semibold text-foreground">Send without sound</span>
+                     </button>
+                     <div className="h-px bg-border/40 my-0.5" />
+                     <button onClick={() => setShowScheduledView(true)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-secondary w-full text-left transition-colors">
+                        <CalendarClock className="w-[18px] h-[18px] text-orange-500" />
+                        <span className="text-sm font-semibold text-foreground">Schedule message</span>
+                     </button>
+                  </div>
+               </PopoverContent>
+            </Popover>
 
-                
-
-                {pendingMedia.length > 0 && (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => {
-                      if (isBlocked) {
-                        toast({ title: "Unavailable", description: "You cannot change view limits in a blocked chat.", variant: "destructive" });
-                        return;
-                      }
-                      setViewLimitOption(prev => {
-                        return prev === 0 ? 1 : prev === 1 ? 2 : 0;
-                      });
-                    }}
-                    disabled={isBlocked}
-                    className={`rounded-full h-[52px] w-[52px] shrink-0 transition-all duration-300 relative ${
-                      viewLimitOption > 0 
-                        ? "bg-red-500/10 text-red-500 hover:bg-red-500/20 shadow-[0_0_12px_rgba(239,68,68,0.15)] border border-red-500/20" 
-                        : "bg-transparent hover:bg-secondary/80 text-muted-foreground"
-                    }`}
-                    title={viewLimitOption === 0 ? "Set View Once" : viewLimitOption === 1 ? "Set View Twice" : "Disable View Once/Twice"}
-                  >
-                    {viewLimitOption === 0 ? (
-                      <EyeOff className="w-[24px] h-[24px]" />
-                    ) : (
-                      <div className="relative">
-                        <Eye className="w-[24px] h-[24px]" />
-                        <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-background shadow-sm">
-                          {viewLimitOption}
-                        </span>
-                      </div>
-                    )}
-                  </Button>
-                )}
+            <div 
+               onContextMenu={(e) => {
+                 e.preventDefault();
+                 document.getElementById('long-press-send-trigger')?.click();
+               }}
+               onTouchStart={(e) => {
+                 touchTimeoutRef.current = setTimeout(() => {
+                   if (navigator.vibrate) navigator.vibrate(50);
+                   document.getElementById('long-press-send-trigger')?.click();
+                 }, 500);
+               }}
+               onTouchEnd={() => clearTimeout(touchTimeoutRef.current!)}
+               onTouchMove={() => clearTimeout(touchTimeoutRef.current!)}
+             >
                 <Button 
                   type="button" 
                   size="icon" 
-                  variant={recording ? "destructive" : "ghost"} 
-                  onClick={recording ? stopRecording : startRecording} 
-                  disabled={isBlocked} 
-                  className={`rounded-full h-[52px] w-[52px] shrink-0 transition-all duration-300 ${recording ? "animate-pulse shadow-lg bg-red-500" : "bg-transparent hover:bg-secondary/80"}`}
+                  onClick={(e) => {
+                    clearTimeout(touchTimeoutRef.current!);
+                    if (recording) {
+                       stopRecording();
+                    } else if (text.trim() || pendingMedia.length > 0 || voicePreview) {
+                       executeSendMediaAndText();
+                    } else {
+                       startRecording();
+                    }
+                  }}
+                  disabled={isUploading || isBlocked} 
+                  className={`rounded-full h-[46px] w-[46px] shadow-sm transition-all duration-300 ${
+                     recording ? "bg-red-500 text-white hover:bg-red-600 animate-pulse" :
+                     (text.trim() || pendingMedia.length > 0 || voicePreview) ? "bg-[#3390ec] text-white hover:bg-[#3390ec]/90 hover:scale-105 active:scale-95" : 
+                     "bg-transparent text-muted-foreground hover:bg-secondary"
+                  }`}
                 >
-                  {recording ? <Square className="w-5 h-5 text-white" /> : <Mic className="w-[24px] h-[24px] text-muted-foreground" />}
+                  {recording ? <Square className="w-5 h-5 fill-current" /> : (text.trim() || pendingMedia.length > 0 || voicePreview) ? <Send className="w-[20px] h-[20px] ml-0.5" /> : <Mic className="w-[24px] h-[24px]" />}
                 </Button>
-              </>
-            )}
-            
-            <Button 
-              type="button" 
-              size="icon" 
-              onClick={executeSendMediaAndText} 
-              disabled={isUploading || isBlocked || (!text.trim() && pendingMedia.length === 0)} 
-              className="rounded-[20px] h-[52px] w-[64px] shrink-0 text-white shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20 disabled:opacity-40 disabled:hover:scale-100"
-              style={{
-                background: (isUploading || isBlocked || (!text.trim() && pendingMedia.length === 0))
-                  ? 'rgba(120,120,140,0.4)'
-                  : 'linear-gradient(135deg, rgba(99,102,241,0.85) 0%, rgba(139,92,246,0.85) 100%)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                boxShadow: (!text.trim() && pendingMedia.length === 0) ? 'none' : '0 4px 20px rgba(99,102,241,0.35), inset 0 1px 0 rgba(255,255,255,0.2)'
-              }}
-            >
-              <Send className="w-[18px] h-[18px]" />
-            </Button>
+            </div>
           </div>
         </div>
       </div>
