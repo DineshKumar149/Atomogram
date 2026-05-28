@@ -7,7 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Loader2, ArrowLeft, Image as ImageIcon, Plus, Link as LinkIcon,
   MessageCircle, Grid3X3, Bookmark, User, X, MoreHorizontal,
-  Camera, CheckCircle2, ShieldOff, Shield, PlaySquare, Contact, Lock
+  Camera, CheckCircle2, ShieldOff, Shield, PlaySquare, Contact, Lock,
+  Menu, Settings as SettingsIcon, Activity, LogOut
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 // ImageCropper removed — post editing now uses CESDKEditor via PostGridItem
@@ -498,8 +499,63 @@ const Profile = () => {
   };
 
   return (
-    <div className="flex-1 w-full min-h-[100dvh] relative font-sans pb-mobile-nav">
+    <div className="flex-1 w-full min-h-[100dvh] relative font-sans pb-mobile-nav pt-[44px] md:pt-0">
       <div className="fixed inset-0 -z-10 bg-background" />
+
+      {/* --- MOBILE TOP NAVBAR --- */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-[44px] bg-background/95 backdrop-blur z-50 flex items-center justify-between px-4 border-b border-border/50">
+        <div className="flex items-center gap-2">
+          {!isOwnProfile && (
+            <button onClick={() => navigate(-1)} className="p-1 -ml-1">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
+          <span className="font-bold text-xl tracking-tight flex items-center gap-1.5">
+            {profileData?.is_private && <Lock className="w-4 h-4" />}
+            {username}
+          </span>
+        </div>
+        <div className="flex items-center gap-4">
+          {isOwnProfile ? (
+            <>
+              <button onClick={() => postFileInputRef.current?.click()} className="active:scale-90 transition-transform">
+                <Plus className="w-6 h-6" />
+              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="active:scale-90 transition-transform outline-none"><Menu className="w-7 h-7" /></button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2 border-border/50 shadow-xl" sideOffset={8}>
+                  <DropdownMenuItem onClick={() => navigate("/settings")} className="py-3 px-3 font-medium cursor-pointer rounded-xl">
+                    <SettingsIcon className="w-5 h-5 mr-3" /> Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/activity")} className="py-3 px-3 font-medium cursor-pointer rounded-xl">
+                    <Activity className="w-5 h-5 mr-3" /> Your activity
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setActiveTab("saved")} className="py-3 px-3 font-medium cursor-pointer rounded-xl">
+                    <Bookmark className="w-5 h-5 mr-3" /> Saved
+                  </DropdownMenuItem>
+                  <div className="h-px bg-border/50 my-1 mx-2" />
+                  <DropdownMenuItem onClick={async () => { await supabase.auth.signOut(); navigate("/login"); }} className="py-3 px-3 font-medium cursor-pointer rounded-xl text-destructive focus:text-destructive focus:bg-destructive/10">
+                    <LogOut className="w-5 h-5 mr-3" /> Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="active:scale-90 transition-transform outline-none"><MoreHorizontal className="w-6 h-6" /></button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 border-border/50 shadow-xl" sideOffset={8}>
+                <DropdownMenuItem onClick={handleToggleBlock} className={`py-3 px-3 gap-2 font-medium cursor-pointer rounded-xl ${hasBlockedTarget ? "text-foreground" : "text-destructive focus:text-destructive focus:bg-destructive/10"}`}>
+                  {hasBlockedTarget ? <><Shield className="w-5 h-5 mr-1" /> Unblock</> : <><ShieldOff className="w-5 h-5 mr-1" /> Block User</>}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+      </div>
 
       {showFollowingPopup && profileData && (
         <FollowingPopup
@@ -550,7 +606,7 @@ const Profile = () => {
                 <button
                   onClick={() => coverInputRef.current?.click()}
                   disabled={coverUploading}
-                  className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-colors text-white"
+                  className="absolute top-14 md:top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-colors text-white"
                 >
                   {coverUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
                 </button>
@@ -560,7 +616,7 @@ const Profile = () => {
             {!isOwnProfile && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-colors text-white">
+                  <button className="hidden md:flex absolute top-4 right-4 w-9 h-9 items-center justify-center rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-colors text-white">
                     <MoreHorizontal className="w-4 h-4" />
                   </button>
                 </DropdownMenuTrigger>
