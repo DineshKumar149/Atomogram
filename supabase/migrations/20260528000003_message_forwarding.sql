@@ -1,0 +1,2 @@
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS forwarded_from_name TEXT DEFAULT NULL;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS forwarded_from_avatar TEXT DEFAULT NULL;

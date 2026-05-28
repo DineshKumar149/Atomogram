@@ -81,9 +81,51 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   const [text, setText] = useState("");
   const [reply, setReply] = useState<Msg | null>(null);
   const [editingMessage, setEditingMessage] = useState<Msg | null>(null);
+  const [selectedMessages, setSelectedMessages] = useState<string[]>([]);
+  const isSelectionMode = selectedMessages.length > 0;
   const [isSilent, setIsSilent] = useState(false);
-  const touchStartRef = useRef<{ id: string; x: number }>({ id: "", x: 0 });
-  const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const touchStartRef = useRef<{ id: string; x: number, y: number, time: number }>({ id: "", x: 0, y: 0, time: 0 });
+  const touchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const [forwardModalOpen, setForwardModalOpen] = useState(false);
+  const [recentChats, setRecentChats] = useState<any[]>([]);
+
+  const openForwardModal = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("conversation_participants")
+      .select("conversation_id, conversations(id, type, name)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    
+    if (data) {
+      setRecentChats(data.map(d => d.conversations));
+      setForwardModalOpen(true);
+    }
+  };
+
+  const handleForward = async (targetConvId: string) => {
+    if (!user) return;
+    const msgsToForward = selectedMessages.map(id => messages.find(m => m.id === id)).filter(Boolean);
+    
+    for (const msg of msgsToForward) {
+       await supabase.from("messages").insert({
+          conversation_id: targetConvId,
+          user_id: user.id,
+          content: msg.content,
+          media_type: msg.media_type,
+          media_url: msg.media_url,
+          forwarded_from_name: user.user_metadata?.full_name || user.email,
+          status: "published"
+       });
+    }
+    setForwardModalOpen(false);
+    setSelectedMessages([]);
+    toast({ title: "Messages forwarded!" });
+  };
+
+  const [typingUsers, setTypingUsers] = useState<{id: string, action: string}[]>([]);
   const [pendingMedia, setPendingMedia] = useState<PendingMedia[]>([]);
   
   const [recording, setRecording] = useState(false);
@@ -170,10 +212,38 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   
   const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
 
+const renderText = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(/(\|\|.*?\|\|)/g);
+    return parts.map((part, i) => {
+        if (part.startsWith('||') && part.endsWith('||')) {
+            const secret = part.slice(2, -2);
+            return (
+                <span 
+                  key={i} 
+                  className="cursor-pointer transition-all duration-300 blur-md bg-foreground/20 text-transparent rounded px-1 hover:opacity-80" 
+                  onClick={(e) => { 
+                      e.currentTarget.classList.remove('blur-md', 'bg-foreground/20', 'text-transparent'); 
+                  }}
+                >{secret}</span>
+            );
+        }
+        return <span key={i}>{part}</span>;
+    });
+};
+
+
   const handleTouchStart = (e: React.TouchEvent, id: string) => {
-    touchStartRef.current = { id, x: e.touches[0].clientX };
+    touchStartRef.current = { id, x: e.touches[0].clientX, y: e.touches[0].clientY, time: Date.now() };
+    if (!isSelectionMode) {
+      touchTimeoutRef.current = setTimeout(() => {
+        if (navigator.vibrate) navigator.vibrate(50);
+        setSelectedMessages([id]);
+      }, 500);
+    }
   };
   const handleTouchMove = (e: React.TouchEvent, id: string) => {
+    if (touchTimeoutRef.current) clearTimeout(touchTimeoutRef.current);
     if (touchStartRef.current.id !== id) return;
     const deltaX = e.touches[0].clientX - touchStartRef.current.x;
     const el = document.getElementById(`msg-${id}`);
@@ -182,7 +252,17 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
     }
   };
   const handleTouchEnd = (e: React.TouchEvent, id: string, msg: any) => {
+    if (touchTimeoutRef.current) clearTimeout(touchTimeoutRef.current);
     if (touchStartRef.current.id !== id) return;
+    
+    const duration = Date.now() - touchStartRef.current.time;
+    if (duration < 500 && Math.abs(e.changedTouches[0].clientX - touchStartRef.current.x) < 10) {
+        if (isSelectionMode) {
+            setSelectedMessages(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]);
+            touchStartRef.current = { id: "", x: 0, y: 0, time: 0 };
+            return;
+        }
+    }
     const deltaX = e.changedTouches[0].clientX - touchStartRef.current.x;
     const el = document.getElementById(`msg-${id}`);
     if (el) {
@@ -788,8 +868,8 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
       .on("postgres_changes", { event: "*", schema: "public", table: "calls", filter: `conversation_id=eq.${conversationId}` }, () => loadCallHistory())
       .on("postgres_changes", { event: "*", schema: "public", table: "user_blocks" }, () => loadOtherUser())
       .on("postgres_changes", { event: "*", schema: "public", table: "typing_indicators", filter: `conversation_id=eq.${conversationId}` }, async () => {
-        const { data } = await supabase.from("typing_indicators").select("user_id, updated_at").eq("conversation_id", conversationId).gt("updated_at", new Date(Date.now() - 5000).toISOString());
-        setTypingUsers((data ?? []).map((t) => t.user_id).filter((id) => id !== user?.id));
+        const { data } = await supabase.from("typing_indicators").select("user_id, updated_at, action_type").eq("conversation_id", conversationId).gt("updated_at", new Date(Date.now() - 5000).toISOString());
+        setTypingUsers((data ?? []).filter(t => t.user_id !== user?.id).map(t => ({ id: t.user_id, action: t.action_type || 'typing' })));
       })
       .on("broadcast", { event: "webrtc-signal" }, handleWebRTCSignal)
       .subscribe();
@@ -834,9 +914,9 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages.length, pendingMedia.length]);
 
-  const broadcastTyping = async () => {
+  const broadcastTyping = async (actionType = 'typing') => {
     if (!user) return;
-    await supabase.from("typing_indicators").upsert({ conversation_id: conversationId, user_id: user.id, updated_at: new Date().toISOString() }, { onConflict: "conversation_id,user_id" });
+    await supabase.from("typing_indicators").upsert({ conversation_id: conversationId, user_id: user.id, updated_at: new Date().toISOString(), action_type: actionType }, { onConflict: "conversation_id,user_id" });
     if (typingTimeout.current) window.clearTimeout(typingTimeout.current);
     typingTimeout.current = window.setTimeout(async () => {
       await supabase.from("typing_indicators").delete().eq("conversation_id", conversationId).eq("user_id", user.id);
@@ -1028,6 +1108,8 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   };
 
   const startRecording = async () => {
+    broadcastTyping('audio');
+    
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const rec = new MediaRecorder(stream);
@@ -1429,7 +1511,7 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
                   if (isSingleEmoji) {
                     return (
                       <div className="text-[56px] leading-none select-none" style={{background:'none',boxShadow:'none',padding:0}}>
-                        {m.content}
+                        {renderText(m.content)}
                       </div>
                     );
                   }
@@ -1598,7 +1680,7 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
                     // Fallback if JSON parse fails
                     return (
                       <div className={`relative px-4 py-2.5 shadow-sm ${isMe ? "bg-primary text-primary-foreground rounded-2xl rounded-br-sm" : "bg-secondary text-secondary-foreground rounded-2xl rounded-bl-sm"}`}>
-                        <div className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">{m.content}</div>
+                        <div className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">{renderText(m.content)}</div>
                       </div>
                     );
                   }
@@ -1635,7 +1717,7 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
                           {repliedTo.content ?? `Attachment: ${repliedTo.media_type}`}
                         </div>
                       )}
-                      {m.media_type === "text" && <div className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">{m.content}</div>}
+                      {m.media_type === "text" && <div className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">{renderText(m.content)}</div>}
                       {m.media_type === "video" && m.media_url && <video src={m.media_url} controls className="rounded-xl max-h-[300px] shadow-sm" />}
                       {m.media_type === "audio" && m.media_url && <audio src={m.media_url} controls className="max-w-full mt-1 h-11" />}
                     </div>
@@ -2301,7 +2383,7 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
                   <div className="absolute top-0 left-0 w-1 h-full bg-orange-500" />
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      {m.content && <p className="text-sm font-medium whitespace-pre-wrap">{m.content}</p>}
+                      {m.content && <p className="text-sm font-medium whitespace-pre-wrap">{renderText(m.content)}</p>}
                       {m.media_url && m.media_type === "image" && <img src={m.media_url} alt="" className="h-20 rounded-xl mt-2 object-cover" />}
                       {m.media_url && m.media_type === "pdf" && (
                         <div className="flex items-center gap-2 mt-2 bg-background p-2 rounded-xl">
