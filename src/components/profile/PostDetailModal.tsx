@@ -119,6 +119,24 @@ const PostDetailModal = ({ post, authorProfile, onClose }: PostDetailModalProps)
   const [recentLiker, setRecentLiker] = useState<any>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const commentsEndRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0 && currentImageIndex > 0) {
+        setCurrentImageIndex((i) => i - 1);
+      } else if (diff < 0 && currentImageIndex < imageList.length - 1) {
+        setCurrentImageIndex((i) => i + 1);
+      }
+    }
+    touchStartX.current = null;
+  };
 
   // Whether this viewer can see like count
   const canSeeLikes = !post.hide_likes || (user && user.id === post.user_id);
@@ -371,7 +389,11 @@ const PostDetailModal = ({ post, authorProfile, onClose }: PostDetailModalProps)
           <div className="w-full md:w-1/2 h-full bg-black shrink-0 relative flex items-center justify-center overflow-hidden">
             {imageList.length > 1 ? (
               /* Carousel with left/right navigation */
-              <div className="w-full h-full relative flex items-center justify-center">
+              <div 
+                className="w-full h-full relative flex items-center justify-center"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              >
                 {/* Current media */}
                 {post.media_type === "video" ? (
                   <CustomVideoPlayer

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Heart, Send } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Heart, Send, Trash2, Eye, MoreHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -59,6 +59,12 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
   // Share Dialog
   const [shareOpen, setShareOpen] = useState(false);
 
+  // Viewers and creator actions
+  const [viewersCount, setViewersCount] = useState(0);
+  const [viewersOpen, setViewersOpen] = useState(false);
+  const [viewersList, setViewersList] = useState<any[]>([]);
+  const [deleting, setDeleting] = useState(false);
+
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const elapsedRef = useRef<number>(0);
@@ -67,10 +73,59 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
 
   // Swipe/Drag detection states
   const touchStartXRef = useRef<number | null>(null);
-  const dragStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+  const touchStartTimeRef = useRef<number | null>(null);
 
   const activeGroup = groups[groupIndex];
   const currentStory = activeGroup?.stories[storyIndex];
+
+  // Fetch viewers if this is my story
+  useEffect(() => {
+    if (activeGroup?.user_id === user?.id && currentStory) {
+      const fetchViewers = async () => {
+        const { data, count } = await supabase
+          .from("story_views")
+          .select("viewer_id, viewed_at, profiles!story_views_viewer_id_fkey(username, display_name, avatar_url)", { count: "exact" })
+          .eq("story_id", currentStory.id)
+          .order("viewed_at", { ascending: false });
+        
+        if (data) {
+          setViewersList(data);
+          setViewersCount(count || 0);
+        }
+      };
+      fetchViewers();
+    }
+  }, [currentStory, activeGroup?.user_id, user?.id]);
+
+  const handleDeleteStory = async () => {
+    if (!currentStory || !user) return;
+    try {
+      setDeleting(true);
+      setPaused(true);
+      
+      await supabase.from("stories").delete().eq("id", currentStory.id);
+      
+      try {
+        const path = currentStory.media_url.split('/stories/')[1];
+        if (path) {
+          await supabase.storage.from("stories").remove([path]);
+        }
+      } catch (err) {
+        console.error("Error deleting from storage", err);
+      }
+      
+      toast({ title: "Story deleted" });
+      onClose(); 
+    } catch (e) {
+      toast({ title: "Failed to delete story", variant: "destructive" });
+      setDeleting(false);
+      setPaused(false);
+    }
+  };
+
+  // Swipe/Drag detection states
+  const dragStartXRef = useRef<number | null>(null);
 
   const clearTimer = useCallback(() => {
     if (progressRef.current) {
@@ -123,6 +178,8 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
 
   const startTimer = useCallback(() => {
     clearTimer();
+    if (currentStory?.media_type === "video") return;
+    
     startTimeRef.current = Date.now() - elapsedRef.current;
 
     progressRef.current = setInterval(() => {
@@ -137,7 +194,7 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
         goNextStory();
       }
     }, 50);
-  }, [clearTimer, goNextStory]);
+  }, [clearTimer, goNextStory, currentStory?.media_type]);
 
   useEffect(() => {
     if (currentStory) {
@@ -146,7 +203,7 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
   }, [currentStory, markViewed]);
 
   useEffect(() => {
-    if (!paused && !shareOpen) {
+    if (!paused && !shareOpen && !viewersOpen) {
       if (currentStory?.media_type === "video") {
         if (videoRef.current) {
           videoRef.current.play().catch(() => {});
@@ -161,7 +218,7 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
     }
 
     return () => clearTimer();
-  }, [paused, storyIndex, groupIndex, startTimer, clearTimer, currentStory?.media_type, shareOpen]);
+  }, [paused, storyIndex, groupIndex, startTimer, clearTimer, currentStory?.media_type, shareOpen, viewersOpen]);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -297,24 +354,65 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
   };
 
   // Swipe & Touch Gestures
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartXRef.current = e.touches[0].clientX;
+
+  const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest(".interactive-zone")) return;
+    
+    if ('touches' in e) {
+      touchStartXRef.current = e.touches[0].clientX;
+      touchStartYRef.current = e.touches[0].clientY;
+    } else {
+      touchStartXRef.current = (e as React.MouseEvent).clientX;
+      touchStartYRef.current = (e as React.MouseEvent).clientY;
+    }
+    
+    touchStartTimeRef.current = Date.now();
     setPaused(true);
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    setPaused(false);
-    if (touchStartXRef.current === null) return;
-    const touchEndX = e.changedTouches[0].clientX;
-    const diff = touchEndX - touchStartXRef.current;
+  const handleTouchEnd = (e: React.TouchEvent | React.MouseEvent) => {
+    if (touchStartXRef.current === null || touchStartYRef.current === null) {
+      setPaused(false);
+      return;
+    }
+    
+    const target = e.target as HTMLElement;
+    if (target.closest(".interactive-zone")) {
+      setPaused(false);
+      return;
+    }
 
-    // Minimum swipe distance
-    if (Math.abs(diff) > 50) {
-      if (diff < 0) {
+    let touchEndX: number;
+    let touchEndY: number;
+
+    if ('changedTouches' in e) {
+      touchEndX = (e as React.TouchEvent).changedTouches[0].clientX;
+      touchEndY = (e as React.TouchEvent).changedTouches[0].clientY;
+    } else {
+      touchEndX = (e as React.MouseEvent).clientX;
+      touchEndY = (e as React.MouseEvent).clientY;
+    }
+
+    const diffX = touchEndX - touchStartXRef.current;
+    const diffY = touchEndY - touchStartYRef.current;
+    const duration = touchStartTimeRef.current ? Date.now() - touchStartTimeRef.current : 0;
+
+    // Swipe down to close
+    if (diffY > 100 && Math.abs(diffY) > Math.abs(diffX)) {
+      onClose();
+      return;
+    }
+
+    // Minimum swipe distance for horizontal swipe (changing user group)
+    if (Math.abs(diffX) > 50) {
+      if (diffX < 0) {
         // Swipe Left -> Next group
         if (groupIndex < groups.length - 1) {
           setGroupIndex((g) => g + 1);
           setStoryIndex(0);
+        } else {
+          onClose(); // Auto close if it's the last group
         }
       } else {
         // Swipe Right -> Prev group
@@ -323,40 +421,21 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
           setStoryIndex(0);
         }
       }
-    }
-    touchStartXRef.current = null;
-  };
-
-  // Mouse drag gestures (for desktop mouse swipe)
-  const handleMouseDown = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest(".interactive-zone")) return;
-    dragStartXRef.current = e.clientX;
-    setPaused(true);
-  };
-
-  const handleMouseUp = (e: React.MouseEvent) => {
-    setPaused(false);
-    if (dragStartXRef.current === null) return;
-    const dragEndX = e.clientX;
-    const diff = dragEndX - dragStartXRef.current;
-
-    if (Math.abs(diff) > 60) {
-      if (diff < 0) {
-        // Drag Left -> Next group
-        if (groupIndex < groups.length - 1) {
-          setGroupIndex((g) => g + 1);
-          setStoryIndex(0);
-        }
+    } else if (duration < 250) {
+      // It's a quick tap (navigate within group)
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = touchEndX - rect.left;
+      if (x < rect.width * 0.3) {
+        goPrevStory();
       } else {
-        // Drag Right -> Prev group
-        if (groupIndex > 0) {
-          setGroupIndex((g) => g - 1);
-          setStoryIndex(0);
-        }
+        goNextStory();
       }
     }
-    dragStartXRef.current = null;
+    
+    setPaused(false);
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+    touchStartTimeRef.current = null;
   };
 
   if (!activeGroup || !currentStory) return null;
@@ -436,15 +515,14 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
 
         {/* 2. CENTER CARD (ACTIVE STORY USER) */}
         <div
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
+          onMouseDown={handleTouchStart}
+          onMouseUp={handleTouchEnd}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          onClick={handleTap}
           className="relative w-full max-w-[400px] h-full rounded-2xl overflow-hidden border border-white/15 bg-black flex flex-col justify-between shadow-2xl transition-all duration-300 scale-100 z-30"
         >
           {/* Progress indicators */}
-          <div className="absolute top-3.5 inset-x-3.5 flex gap-1 pointer-events-none z-40">
+          <div className={`absolute top-3.5 inset-x-3.5 flex gap-1 pointer-events-none z-40 transition-opacity duration-200 ${paused ? "opacity-0" : "opacity-100"}`}>
             {activeGroup.stories.map((_, i) => (
               <div key={i} className="flex-1 h-[2.5px] rounded-full bg-white/30 overflow-hidden">
                 <div
@@ -459,7 +537,7 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
           </div>
 
           {/* User info top row */}
-          <div className="absolute top-6 left-4 right-4 flex items-center justify-between z-40">
+          <div className={`absolute top-6 left-4 right-4 flex items-center justify-between z-40 transition-opacity duration-200 ${paused ? "opacity-0" : "opacity-100"}`}>
             <div className="flex items-center gap-2.5 pointer-events-none">
               <div className="p-[2px] rounded-full bg-gradient-to-br from-amber-500 via-red-500 to-purple-600">
                 <Avatar className="w-8 h-8 border border-black">
@@ -484,7 +562,7 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
               {currentStory.media_type === "video" && (
                 <button
                   onClick={() => setMuted((m) => !m)}
-                  className="w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-all cursor-pointer"
+                  className="w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-all cursor-pointer pointer-events-auto"
                 >
                   {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
                 </button>
@@ -504,6 +582,12 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
                 playsInline
                 muted={muted}
                 onEnded={goNextStory}
+                onTimeUpdate={(e) => {
+                  const v = e.target as HTMLVideoElement;
+                  if (v.duration) {
+                    setProgress((v.currentTime / v.duration) * 100);
+                  }
+                }}
               />
             ) : (
               <img
@@ -515,12 +599,12 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
             )}
 
             {/* Top and Bottom Gradients overlay */}
-            <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/80 via-black/30 to-transparent pointer-events-none z-10" />
-            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none z-10" />
+            <div className={`absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/80 via-black/30 to-transparent pointer-events-none z-10 transition-opacity duration-200 ${paused ? "opacity-0" : "opacity-100"}`} />
+            <div className={`absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none z-10 transition-opacity duration-200 ${paused ? "opacity-0" : "opacity-100"}`} />
 
             {/* Caption Text overlay */}
             {currentStory.caption && (
-              <div className="absolute bottom-20 inset-x-4 pointer-events-none z-30">
+              <div className={`absolute bottom-20 inset-x-4 pointer-events-none z-30 transition-opacity duration-200 ${paused ? "opacity-0" : "opacity-100"}`}>
                 <p className="text-white text-sm font-medium leading-relaxed drop-shadow-lg text-center max-w-full truncate-3-lines">
                   {currentStory.caption}
                 </p>
@@ -529,72 +613,94 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
           </div>
 
           {/* Footer Interactive bar */}
-          <div className="px-4 py-3.5 bg-black border-t border-white/10 flex items-center gap-3.5 z-40 interactive-zone">
-            {/* Reply pill input */}
-            <div className="flex-1 relative flex items-center">
-              <input
-                type="text"
-                placeholder={`Reply to ${getDisplayName(activeGroup.profile)}...`}
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendReply();
-                  }
-                }}
-                className="w-full bg-[#1c1c1e] text-white border border-white/15 rounded-full py-2 pl-4 pr-10 text-xs placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-[#0095f6] transition-all"
-              />
-              <button
-                onClick={handleSendReply}
-                disabled={!replyText.trim() || sendingReply}
-                className="absolute right-3 text-[#0095f6] hover:text-[#1877f2] disabled:opacity-0 transition-opacity cursor-pointer"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </div>
+          <div className={`px-4 py-3.5 bg-black border-t border-white/10 flex items-center gap-3.5 z-40 interactive-zone transition-opacity duration-200 ${paused ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+            {activeGroup.user_id === user?.id ? (
+              <>
+                <button
+                  onClick={() => setViewersOpen(true)}
+                  className="flex items-center gap-2 text-white hover:text-white/80 transition-colors cursor-pointer"
+                >
+                  <Eye className="w-5 h-5" />
+                  <span className="text-sm font-semibold">{viewersCount} Viewers</span>
+                </button>
+                <div className="flex-1" />
+                <button
+                  onClick={handleDeleteStory}
+                  disabled={deleting}
+                  className="p-2 text-white/80 hover:text-red-500 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Reply pill input */}
+                <div className="flex-1 relative flex items-center">
+                  <input
+                    type="text"
+                    placeholder={`Reply to ${getDisplayName(activeGroup.profile)}...`}
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendReply();
+                      }
+                    }}
+                    className="w-full bg-[#1c1c1e] text-white border border-white/15 rounded-full py-2 pl-4 pr-10 text-xs placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-[#0095f6] transition-all"
+                  />
+                  <button
+                    onClick={handleSendReply}
+                    disabled={!replyText.trim() || sendingReply}
+                    className="absolute right-3 text-[#0095f6] hover:text-[#1877f2] disabled:opacity-0 transition-opacity cursor-pointer"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                  </button>
+                </div>
 
-            {/* Like and Share buttons */}
-            <button
-              onClick={handleLikeStory}
-              className="hover:scale-105 active:scale-95 transition-transform text-white cursor-pointer"
-            >
-              <Heart
-                className={`w-[22px] h-[22px] ${
-                  likedStories[currentStory.id] ? "fill-red-500 text-red-500 scale-110" : ""
-                }`}
-              />
-            </button>
-            <button
-              onClick={() => setShareOpen(true)}
-              className="hover:scale-105 active:scale-95 transition-transform text-white cursor-pointer"
-            >
-              <svg
-                aria-label="Share"
-                className="text-white fill-current"
-                height="22"
-                viewBox="0 0 24 24"
-                width="22"
-              >
-                <line
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  x1="22"
-                  x2="9.218"
-                  y1="3"
-                  y2="10.083"
-                ></line>
-                <polygon
-                  fill="none"
-                  points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334"
-                  stroke="currentColor"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                ></polygon>
-              </svg>
-            </button>
+                {/* Like and Share buttons */}
+                <button
+                  onClick={handleLikeStory}
+                  className="hover:scale-105 active:scale-95 transition-transform text-white cursor-pointer"
+                >
+                  <Heart
+                    className={`w-[22px] h-[22px] ${
+                      likedStories[currentStory.id] ? "fill-red-500 text-red-500 scale-110" : ""
+                    }`}
+                  />
+                </button>
+                <button
+                  onClick={() => setShareOpen(true)}
+                  className="hover:scale-105 active:scale-95 transition-transform text-white cursor-pointer"
+                >
+                  <svg
+                    aria-label="Share"
+                    className="text-white fill-current"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    width="22"
+                  >
+                    <line
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      x1="22"
+                      x2="9.218"
+                      y1="3"
+                      y2="10.083"
+                    ></line>
+                    <polygon
+                      fill="none"
+                      points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334"
+                      stroke="currentColor"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                    ></polygon>
+                  </svg>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -665,6 +771,53 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
             is_video: currentStory.media_type === "video",
           }}
         />
+      )}
+
+      {/* Viewers List Overlay */}
+      {viewersOpen && (
+        <div className="absolute inset-x-0 bottom-0 top-1/3 bg-background rounded-t-3xl shadow-2xl z-50 flex flex-col pointer-events-auto border-t border-border overflow-hidden md:w-[400px] md:left-1/2 md:-translate-x-1/2 md:top-auto md:h-[60vh] md:rounded-3xl md:bottom-20">
+          <div className="flex items-center justify-between p-4 border-b border-border/50 sticky top-0 bg-background/95 backdrop-blur z-10">
+            <h3 className="font-bold flex items-center gap-2 text-foreground">
+              <Eye className="w-5 h-5" />
+              Viewers ({viewersCount})
+            </h3>
+            <button
+              onClick={() => setViewersOpen(false)}
+              className="p-2 hover:bg-secondary rounded-full transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+            {viewersList.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground py-10">
+                <Eye className="w-12 h-12 mb-3 opacity-20" />
+                <p>No viewers yet</p>
+              </div>
+            ) : (
+              viewersList.map((viewer: any) => (
+                <div key={viewer.viewer_id} className="flex items-center gap-3">
+                  <Avatar className="w-12 h-12 border border-border/50">
+                    <AvatarImage src={viewer.profiles?.avatar_url} />
+                    <AvatarFallback>{(viewer.profiles?.display_name || viewer.profiles?.username || "?").slice(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    <span className="font-semibold text-[15px] text-foreground truncate">
+                      {viewer.profiles?.username || viewer.profiles?.display_name || "User"}
+                    </span>
+                    <span className="text-[13px] text-muted-foreground">
+                      {viewer.profiles?.display_name && viewer.profiles?.username ? viewer.profiles.display_name : ""}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground whitespace-nowrap">
+                    {getSafeDate(viewer.viewed_at)}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
