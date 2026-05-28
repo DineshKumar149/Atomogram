@@ -13,12 +13,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const isChatRoom = location.pathname.startsWith("/chat") && searchParams.has("c");
+  const isChatPage = location.pathname.startsWith("/chat");
   const isReels = location.pathname.startsWith("/reels");
   const isProfile = location.pathname.startsWith("/profile");
 
-  const isHideTopNav = isChatRoom || isReels || isProfile;
-  const isHideBottomNav = isChatRoom;
+  const isHideTopNav = isChatPage || isReels || isProfile;
+  const isHideBottomNav = isChatPage;
 
   return (
     <>

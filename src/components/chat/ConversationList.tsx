@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, ChevronDown, Edit } from "lucide-react";
+import { Users, ChevronDown, Edit, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { isAdminUser } from "@/lib/admin";
 import { useChatUnread } from "@/hooks/use-chat-unread";
 import UserProfileModal from "@/components/shared/UserProfileModal";
@@ -25,6 +26,7 @@ interface Props {
 }
 
 const ConversationList = ({ activeId, onSelect }: Props) => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { unread } = useChatUnread();
   const [convs, setConvs] = useState<ConvRow[]>([]);
@@ -158,10 +160,19 @@ const ConversationList = ({ activeId, onSelect }: Props) => {
         {/* Header */}
         <div className="flex flex-col pt-6 pb-2 px-5 border-b border-border/50">
           <div className="flex items-center justify-between mb-6">
-            <button className="flex items-center gap-2 text-xl font-bold tracking-tight hover:opacity-80 transition-opacity">
-              {user?.user_metadata?.username || user?.email?.split("@")[0] || "Messages"}
-              <ChevronDown className="w-5 h-5 mt-1 text-muted-foreground" />
-            </button>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => navigate("/gallery")} 
+                className="md:hidden p-1 -ml-2 rounded-full hover:bg-secondary transition-colors"
+                aria-label="Back to Feed"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </button>
+              <button className="flex items-center gap-2 text-xl font-bold tracking-tight hover:opacity-80 transition-opacity">
+                {user?.user_metadata?.username || user?.email?.split("@")[0] || "Messages"}
+                <ChevronDown className="w-5 h-5 mt-1 text-muted-foreground" />
+              </button>
+            </div>
             <button
               onClick={() => setNewMsgOpen(true)}
               className="p-2 hover:bg-secondary rounded-full transition-colors"
