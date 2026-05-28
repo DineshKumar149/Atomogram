@@ -21,6 +21,7 @@ interface Story {
   created_at: string;
   expires_at: string;
   profile?: Profile;
+  has_viewed?: boolean;
 }
 
 interface StoryGroup {
@@ -81,7 +82,7 @@ export default function StoriesBar({ onOpenViewer, onOpenCreate }: StoriesBarPro
       .select("*")
       .in("user_id", allowedUserIds)
       .gt("expires_at", now)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: true });
 
     if (storiesError) {
       console.error("Error fetching stories:", storiesError);
@@ -127,6 +128,7 @@ export default function StoriesBar({ onOpenViewer, onOpenCreate }: StoriesBarPro
     const stories: Story[] = (storiesData || []).map((s: Story) => ({
       ...s,
       profile: profilesMap[s.user_id],
+      has_viewed: viewedIds.has(s.id),
     }));
 
     const myStories = stories.filter((s) => s.user_id === user.id);
@@ -153,7 +155,10 @@ export default function StoriesBar({ onOpenViewer, onOpenCreate }: StoriesBarPro
     const sortedGroups = Object.values(othersGrouped).sort((a, b) => {
       if (!a.hasViewed && b.hasViewed) return -1;
       if (a.hasViewed && !b.hasViewed) return 1;
-      return 0;
+      
+      const aLatest = new Date(a.stories[a.stories.length - 1].created_at).getTime();
+      const bLatest = new Date(b.stories[b.stories.length - 1].created_at).getTime();
+      return bLatest - aLatest;
     });
 
     setStoryGroups(sortedGroups);

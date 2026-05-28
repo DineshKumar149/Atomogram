@@ -23,6 +23,7 @@ interface Story {
   created_at: string;
   expires_at: string;
   profile?: Profile;
+  has_viewed?: boolean;
 }
 
 interface StoryGroup {
@@ -45,7 +46,13 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
   const { toast } = useToast();
 
   const [groupIndex, setGroupIndex] = useState(startGroupIndex);
-  const [storyIndex, setStoryIndex] = useState(0);
+  
+  // Find first unread story in the initial group
+  const initialGroup = groups[startGroupIndex];
+  const firstUnreadIndex = initialGroup?.stories.findIndex(s => !s.has_viewed);
+  const initialStoryIndex = firstUnreadIndex >= 0 ? firstUnreadIndex : 0;
+  
+  const [storyIndex, setStoryIndex] = useState(initialStoryIndex);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -155,8 +162,10 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
     if (storyIndex < activeGroup.stories.length - 1) {
       setStoryIndex((prev) => prev + 1);
     } else if (groupIndex < groups.length - 1) {
+      const nextGroup = groups[groupIndex + 1];
+      const nextUnread = nextGroup.stories.findIndex(s => !s.has_viewed);
       setGroupIndex((prev) => prev + 1);
-      setStoryIndex(0);
+      setStoryIndex(nextUnread >= 0 ? nextUnread : 0);
     } else {
       onClose();
     }
@@ -409,16 +418,20 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
       if (diffX < 0) {
         // Swipe Left -> Next group
         if (groupIndex < groups.length - 1) {
+          const nextGroup = groups[groupIndex + 1];
+          const nextUnread = nextGroup.stories.findIndex(s => !s.has_viewed);
           setGroupIndex((g) => g + 1);
-          setStoryIndex(0);
+          setStoryIndex(nextUnread >= 0 ? nextUnread : 0);
         } else {
           onClose(); // Auto close if it's the last group
         }
       } else {
         // Swipe Right -> Prev group
         if (groupIndex > 0) {
+          const prevGroup = groups[groupIndex - 1];
+          const prevUnread = prevGroup.stories.findIndex(s => !s.has_viewed);
           setGroupIndex((g) => g - 1);
-          setStoryIndex(0);
+          setStoryIndex(prevUnread >= 0 ? prevUnread : 0);
         }
       }
     } else if (duration < 250) {
