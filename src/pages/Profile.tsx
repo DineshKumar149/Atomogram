@@ -20,6 +20,7 @@ import EditProfileModal from "@/components/profile/EditProfileModal";
 import FollowersModal from "@/components/profile/FollowersModal";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import StoryViewer from "@/components/stories/StoryViewer";
+import CreateStory from "@/components/stories/CreateStory";
 import { isAdminUser } from "@/lib/admin";
 
 const Profile = () => {
@@ -70,6 +71,7 @@ const Profile = () => {
   const [showFullAvatar, setShowFullAvatar] = useState(false);
   const [storyViewerStories, setStoryViewerStories] = useState<any[]>([]);
   const [storyViewerOpen, setStoryViewerOpen] = useState(false);
+  const [showCreateStory, setShowCreateStory] = useState(false);
 
   const fetchUserPosts = useCallback(async () => {
     if (!profileId) return;
@@ -578,6 +580,16 @@ const Profile = () => {
         />
       )}
 
+      {showCreateStory && (
+        <CreateStory
+          onClose={() => setShowCreateStory(false)}
+          onCreated={() => {
+            setShowCreateStory(false);
+            setHasStory(true);
+          }}
+        />
+      )}
+
       {showFollowersModal && profileId && (
         <FollowersModal
           profileId={profileId}
@@ -664,7 +676,7 @@ const Profile = () => {
                   </div>
                   {isOwnProfile && (
                     <button
-                      onClick={() => postFileInputRef.current?.click()}
+                      onClick={(e) => { e.stopPropagation(); setShowCreateStory(true); }}
                       className="absolute bottom-2 right-2 w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-full flex items-center justify-center border-4 border-background hover:scale-110 transition-transform shadow-lg z-10 group-hover:animate-pulse"
                     >
                       <Plus className="w-5 h-5" />
@@ -762,7 +774,7 @@ const Profile = () => {
                   </div>
                   {isOwnProfile && (
                     <button
-                      onClick={() => postFileInputRef.current?.click()}
+                      onClick={(e) => { e.stopPropagation(); setShowCreateStory(true); }}
                       className="absolute bottom-1 right-1 w-6 h-6 bg-[#0095f6] text-white rounded-full flex items-center justify-center border-2 border-background z-10"
                     >
                       <Plus className="w-4 h-4" strokeWidth={3} />
