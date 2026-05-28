@@ -10,13 +10,13 @@ import {
   Mic, Square, Send, Paperclip, Smile, Reply, Trash2, X, Users, Check, 
   CheckCheck, Info, Phone, Video, Music, Search, Ban, Edit2, BellOff, Bell,
   PhoneIncoming, PhoneOff, Image as ImageIcon, Volume2, MicOff, Grip, MoreHorizontal,
-  PhoneMissed, Clock, Eye, EyeOff, ArrowLeft, FileText, Calendar, Timer, Menu, Ghost, CalendarClock
+  PhoneMissed, Clock, Eye, EyeOff, ArrowLeft, FileText, Calendar, Timer, Menu, Ghost, CalendarClock, Flag, User
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger, PopoverClose } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -1366,82 +1366,90 @@ const renderText = (text: string) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 z-[70] rounded-2xl shadow-xl border-border/40 p-1.5">
-                  <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => { setSearchOpen(o => !o); setSearchQuery(""); }}>
-                    <Search className="w-[18px] h-[18px] mr-3 text-muted-foreground" />
-                    <span className="font-semibold text-sm">Search Messages</span>
-                  </DropdownMenuItem>
-                  
-                  {conv?.type !== "group" && (
-                    <>
-                      <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => {
-                        if (isBlockedByTarget) toast({ title: "Call failed", description: "You cannot contact this user.", variant: "destructive" });
-                        else if (hasBlockedTarget) toast({ title: "Call failed", description: "Unblock this user to make calls.", variant: "destructive" });
-                        else initiateCall("audio");
-                      }}>
-                        <Phone className="w-[18px] h-[18px] mr-3 text-muted-foreground" />
-                        <span className="font-semibold text-sm">Voice Call</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => {
-                        if (isBlockedByTarget) toast({ title: "Call failed", description: "You cannot contact this user.", variant: "destructive" });
-                        else if (hasBlockedTarget) toast({ title: "Call failed", description: "Unblock this user to make calls.", variant: "destructive" });
-                        else initiateCall("video");
-                      }}>
-                        <Video className="w-[18px] h-[18px] mr-3 text-muted-foreground" />
-                        <span className="font-semibold text-sm">Video Call</span>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  
-                  <DropdownMenuSeparator className="bg-border/40 my-1" />
-                  
-                  <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => mediaRef.current?.click()}>
-                    <ImageIcon className="w-[18px] h-[18px] mr-3 text-primary" />
-                    <span className="font-semibold text-sm">Send Media</span>
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => setShowScheduledView(!showScheduledView)}>
-                    <CalendarClock className="w-[18px] h-[18px] mr-3 text-orange-500" />
-                    <span className="font-semibold text-sm">Schedule Message</span>
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={(e) => {
-                     e.preventDefault();
-                     const nv = !vanishMode;
-                     setVanishMode(nv);
-                     supabase.from("conversations").update({ vanish_mode_enabled: nv }).eq("id", conversationId).then();
-                  }}>
-                    {vanishMode ? <Eye className="w-[18px] h-[18px] mr-3 text-destructive" /> : <Ghost className="w-[18px] h-[18px] mr-3 text-muted-foreground" />}
-                    <span className={`font-semibold text-sm ${vanishMode ? "text-destructive" : ""}`}>{vanishMode ? "Disable Vanish Mode" : "Vanish Mode"}</span>
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuSeparator className="bg-border/40 my-1" />
-                  
-                  <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => setDetailsOpen(true)}>
-                    <Info className="w-[18px] h-[18px] mr-3 text-muted-foreground" />
-                    <span className="font-semibold text-sm">Chat Info</span>
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-destructive/10 text-destructive focus:text-destructive transition-colors" onClick={() => executeClearChat()}>
-                    <Trash2 className="w-[18px] h-[18px] mr-3" />
-                    <span className="font-semibold text-sm">Clear Chat</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => { setSearchOpen(o => !o); setSearchQuery(""); }}>
+                      <Search className="w-[18px] h-[18px] mr-3 text-muted-foreground" />
+                      <span className="font-semibold text-sm">Search Messages</span>
+                    </DropdownMenuItem>
+                    
+                    {conv?.type !== "group" && (
+                      <>
+                        <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => {
+                          if (isBlockedByTarget) toast({ title: "Call failed", description: "You cannot contact this user.", variant: "destructive" });
+                          else if (hasBlockedTarget) toast({ title: "Call failed", description: "Unblock this user to make calls.", variant: "destructive" });
+                          else initiateCall("audio");
+                        }}>
+                          <Phone className="w-[18px] h-[18px] mr-3 text-muted-foreground" />
+                          <span className="font-semibold text-sm">Voice Call</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => {
+                          if (isBlockedByTarget) toast({ title: "Call failed", description: "You cannot contact this user.", variant: "destructive" });
+                          else if (hasBlockedTarget) toast({ title: "Call failed", description: "Unblock this user to make calls.", variant: "destructive" });
+                          else initiateCall("video");
+                        }}>
+                          <Video className="w-[18px] h-[18px] mr-3 text-muted-foreground" />
+                          <span className="font-semibold text-sm">Video Call</span>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    
+                    <DropdownMenuSeparator className="bg-border/40 my-1" />
+                    
+                    <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => setIsMuted(!isMuted)}>
+                      {isMuted ? <BellOff className="w-[18px] h-[18px] mr-3 text-primary" /> : <Bell className="w-[18px] h-[18px] mr-3 text-muted-foreground" />}
+                      <span className="font-semibold text-sm">{isMuted ? "Unmute Messages" : "Mute Messages"}</span>
+                    </DropdownMenuItem>
+                    
+                    {conv?.type === "group" && (
+                       <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => setDetailsOpen(true)}>
+                         <Users className="w-[18px] h-[18px] mr-3 text-muted-foreground" />
+                         <span className="font-semibold text-sm">See All Members</span>
+                       </DropdownMenuItem>
+                    )}
+
+                    <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => setShowScheduledView(!showScheduledView)}>
+                      <CalendarClock className="w-[18px] h-[18px] mr-3 text-orange-500" />
+                      <span className="font-semibold text-sm">Scheduled Messages</span>
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuSeparator className="bg-border/40 my-1" />
+                    
+                    <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-destructive/10 text-destructive focus:text-destructive transition-colors" onClick={() => executeClearChat()}>
+                      <Trash2 className="w-[18px] h-[18px] mr-3" />
+                      <span className="font-semibold text-sm">Clear Chat</span>
+                    </DropdownMenuItem>
+
+                    {conv?.type !== "group" && (
+                       <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-destructive/10 text-destructive focus:text-destructive transition-colors" onClick={() => setHasBlockedTarget(!hasBlockedTarget)}>
+                         <Ban className="w-[18px] h-[18px] mr-3" />
+                         <span className="font-semibold text-sm">{hasBlockedTarget ? "Unblock User" : "Block User"}</span>
+                       </DropdownMenuItem>
+                    )}
+
+                    <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-destructive/10 text-destructive focus:text-destructive transition-colors" onClick={() => toast({ title: "Report submitted", description: "Thank you for keeping the community safe." })}>
+                      <Flag className="w-[18px] h-[18px] mr-3" />
+                      <span className="font-semibold text-sm">Report User</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
             </div>
       </div>
 
       {searchOpen && (
-        <div className="px-4 py-2.5 border-b border-border/40 bg-secondary/30 flex items-center gap-3">
-          <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-          <Input
-            autoFocus
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search messages..."
-            className="flex-1 h-9 border-none bg-transparent shadow-none focus-visible:ring-0 text-[14px] placeholder:text-muted-foreground"
-          />
-          {searchQuery && <span className="text-xs text-muted-foreground whitespace-nowrap">{messages.filter(m => m.content?.toLowerCase().includes(searchQuery.toLowerCase())).length} results</span>}
-          <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }} className="text-muted-foreground hover:text-foreground p-1"><X className="w-4 h-4" /></button>
+        <div className="px-4 py-3 bg-background flex items-center shadow-sm z-10 border-b border-border/40">
+          <div className="flex-1 relative bg-secondary/80 dark:bg-[#2c2c2c] rounded-3xl flex items-center px-4 h-11 border-none transition-all duration-300">
+            <Search className="w-5 h-5 text-muted-foreground shrink-0 mr-2" />
+            <Input
+              autoFocus
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search messages..."
+              className="flex-1 border-none bg-transparent shadow-none focus-visible:ring-0 focus:outline-none text-[15px] placeholder:text-muted-foreground px-0 h-full"
+            />
+            {searchQuery && <span className="text-xs font-semibold text-primary whitespace-nowrap mr-3">{messages.filter(m => m.content?.toLowerCase().includes(searchQuery.toLowerCase())).length} results</span>}
+            <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }} className="text-muted-foreground hover:bg-black/10 dark:hover:bg-white/10 p-1.5 rounded-full transition-colors shrink-0">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 
