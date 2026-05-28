@@ -1368,6 +1368,7 @@ const renderText = (text: string) => {
           </div>
         </div>
         <div className="flex items-center text-muted-foreground">
+              <input type="file" id="mobile-wallpaper-upload" className="hidden" accept="image/*" onChange={e => handleGroupImageUpload(e, "wallpaper_url")} />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="icon" variant="ghost" className="h-10 w-10 rounded-full hover:bg-secondary transition-colors focus-visible:ring-0">
@@ -1379,6 +1380,32 @@ const renderText = (text: string) => {
                       <Search className="w-[18px] h-[18px] mr-3 text-muted-foreground" />
                       <span className="font-semibold text-sm">Search Messages</span>
                     </DropdownMenuItem>
+                    
+                    {isMobile && (
+                        <>
+                            {!conv?.wallpaper_url ? (
+                                <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => document.getElementById('mobile-wallpaper-upload')?.click()}>
+                                    <ImageIcon className="w-[18px] h-[18px] mr-3 text-muted-foreground" />
+                                    <span className="font-semibold text-sm">Change Wallpaper</span>
+                                </DropdownMenuItem>
+                            ) : (
+                                <>
+                                    <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-secondary transition-colors" onClick={() => document.getElementById('mobile-wallpaper-upload')?.click()}>
+                                        <ImageIcon className="w-[18px] h-[18px] mr-3 text-muted-foreground" />
+                                        <span className="font-semibold text-sm">Replace Wallpaper</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="rounded-xl px-3 py-2 cursor-pointer focus:bg-destructive/10 text-destructive focus:text-destructive transition-colors" onClick={async () => {
+                                        await supabase.from("conversations").update({ wallpaper_url: null }).eq("id", conversationId);
+                                        loadConv();
+                                        toast({ title: "Wallpaper removed" });
+                                    }}>
+                                        <Trash2 className="w-[18px] h-[18px] mr-3" />
+                                        <span className="font-semibold text-sm">Delete Wallpaper</span>
+                                    </DropdownMenuItem>
+                                </>
+                            )}
+                        </>
+                    )}
                     
                     {conv?.type !== "group" && (
                       <>
