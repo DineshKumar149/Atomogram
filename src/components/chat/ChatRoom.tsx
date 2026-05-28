@@ -87,6 +87,7 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   const [isSilent, setIsSilent] = useState(false);
   const touchStartRef = useRef<{ id: string; x: number, y: number, time: number }>({ id: "", x: 0, y: 0, time: 0 });
   const touchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressRef = useRef(false);
   
   const [forwardModalOpen, setForwardModalOpen] = useState(false);
   const [recentChats, setRecentChats] = useState<any[]>([]);
@@ -2015,10 +2016,13 @@ const renderText = (text: string) => {
             <div 
                onContextMenu={(e) => {
                  e.preventDefault();
+                 longPressRef.current = true;
                  document.getElementById('long-press-send-trigger')?.click();
                }}
                onTouchStart={(e) => {
+                 longPressRef.current = false;
                  touchTimeoutRef.current = setTimeout(() => {
+                   longPressRef.current = true;
                    if (navigator.vibrate) navigator.vibrate(50);
                    document.getElementById('long-press-send-trigger')?.click();
                  }, 500);
@@ -2031,6 +2035,11 @@ const renderText = (text: string) => {
                   size="icon" 
                   onClick={(e) => {
                     clearTimeout(touchTimeoutRef.current!);
+                    if (longPressRef.current) {
+                        longPressRef.current = false;
+                        e.preventDefault();
+                        return;
+                    }
                     if (recording) {
                        stopRecording();
                     } else if (text.trim() || pendingMedia.length > 0 || voicePreview) {
