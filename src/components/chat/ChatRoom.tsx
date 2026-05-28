@@ -10,7 +10,7 @@ import {
   Mic, Square, Send, Paperclip, Smile, Reply, Trash2, X, Users, Check, 
   CheckCheck, Info, Phone, Video, Music, Search, Ban, Edit2, BellOff, Bell,
   PhoneIncoming, PhoneOff, Image as ImageIcon, Volume2, MicOff, Grip, MoreHorizontal,
-  PhoneMissed, Clock, Eye, EyeOff, ArrowLeft, FileText, Calendar, Timer, Menu, Ghost, CalendarClock, Flag, User
+  PhoneMissed, Clock, Eye, EyeOff, ArrowLeft, FileText, Calendar, Timer, Menu, Ghost, CalendarClock, Flag, User, Copy
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -43,6 +43,7 @@ interface Msg {
   status?: string;
   file_name?: string | null;
   file_size?: number | null;
+  deleted_by?: string[];
 }
 
 interface Reaction { id: string; message_id: string; user_id: string; emoji: string; }
@@ -145,7 +146,8 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   const [showScheduledView, setShowScheduledView] = useState(false);
   const [tick, setTick] = useState(0);
   
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string[] | null>(null);
+  const [deleteForEveryone, setDeleteForEveryone] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isBlockedByTarget, setIsBlockedByTarget] = useState(false);
@@ -1163,15 +1165,29 @@ const renderText = (text: string) => {
     }
   };
 
-  const deleteMessage = async (id: string) => {
-    await supabase.from("messages").delete().eq("id", id);
+    const deleteMessage = async () => {
+    if (!confirmDelete || confirmDelete.length === 0 || !user) return;
+    
+    if (deleteForEveryone) {
+      await supabase.from("messages").delete().in("id", confirmDelete);
+    } else {
+      const msgsToUpdate = messages.filter(m => confirmDelete.includes(m.id));
+      for (const m of msgsToUpdate) {
+        const updatedDeletedBy = [...(m.deleted_by || []), user.id];
+        await supabase.from("messages").update({ deleted_by: updatedDeletedBy }).eq("id", m.id);
+      }
+    }
     setConfirmDelete(null);
+    setSelectedMessages([]);
+    setDeleteForEveryone(true);
+    toast({ title: "Messages deleted" });
   };
 
-  const executeClearChat = async () => {
+    const executeClearChat = async () => {
     if (!user) return;
     try {
       await supabase.from("messages").delete().eq("conversation_id", conversationId);
+      await supabase.from("calls").delete().eq("conversation_id", conversationId);
       toast({ title: "Chat cleared successfully" });
       setDetailsOpen(false);
     } catch (error: any) {
@@ -1327,6 +1343,32 @@ const renderText = (text: string) => {
         )
       )}
 
+      {isSelectionMode && (
+        <div className={`flex items-center justify-between py-3 px-4 border-b border-border/40 z-10 shrink-0 shadow-sm bg-background transition-colors duration-500`}>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => setSelectedMessages([])} className="rounded-full hover:bg-secondary">
+              <X className="w-6 h-6" />
+            </Button>
+            <span className="font-bold text-[18px]">{selectedMessages.length}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="rounded-full text-foreground/80 hover:bg-secondary" onClick={() => {
+              const texts = selectedMessages.map(id => messages.find(m => m.id === id)?.content).filter(Boolean);
+              if (texts.length > 0) {
+                navigator.clipboard.writeText(texts.join("\n\n"));
+                toast({ title: "Copied to clipboard" });
+              }
+              setSelectedMessages([]);
+            }}>
+              <Copy className="w-6 h-6" />
+            </Button>
+            <Button variant="ghost" size="icon" className="rounded-full text-destructive hover:bg-destructive/10" onClick={() => setConfirmDelete(selectedMessages)}>
+              <Trash2 className="w-6 h-6" />
+            </Button>
+          </div>
+        </div>
+      )}
+      {!isSelectionMode && (
       <div className={`flex items-center gap-3 py-3 px-4 border-b border-border/40 z-10 shrink-0 shadow-sm transition-colors duration-500 ${vanishMode ? "bg-black text-white border-white/10" : "bg-background"}`}>
         {onBack && (
           <button className="md:hidden shrink-0 text-foreground hover:bg-secondary p-1.5 -ml-2 rounded-full transition-colors" onClick={onBack}>
@@ -1469,6 +1511,7 @@ const renderText = (text: string) => {
                 </DropdownMenu>
             </div>
       </div>
+      )}
 
       {searchOpen && (
         <div className="px-4 py-3 bg-background flex items-center shadow-sm z-10 border-b border-border/40">
@@ -1493,6 +1536,7 @@ const renderText = (text: string) => {
         {(() => {
           const now = new Date();
           const filteredMsgs = (searchQuery ? messages.filter(m => m.content?.toLowerCase().includes(searchQuery.toLowerCase())) : messages)
+            .filter(m => !m.deleted_by?.includes(user?.id || ""))
             .filter(m => !(m.status === "scheduled" && m.scheduled_for && new Date(m.scheduled_for) > now))
             .filter(m => !(m.expires_at && new Date(m.expires_at) < now));
           const callItems = callHistory.map(c => ({ ...c, _isCall: true, created_at: c.created_at }));
@@ -1879,6 +1923,35 @@ const renderText = (text: string) => {
           )}
         </div>
 
+        {isSelectionMode && (
+          <div className="p-2 flex items-center justify-between gap-2 border-t border-border/40 bg-background mb-0 max-w-[800px] mx-auto w-full h-14">
+            {selectedMessages.length === 1 ? (
+              <>
+                <Button variant="ghost" className="flex-1 flex flex-col items-center justify-center h-full gap-1 text-muted-foreground hover:text-foreground" onClick={() => {
+                  const m = messages.find(x => x.id === selectedMessages[0]);
+                  if (m) {
+                    setReply(m);
+                    setSelectedMessages([]);
+                  }
+                }}>
+                  <Reply className="w-5 h-5" />
+                  <span className="text-[10px] font-bold uppercase">Reply</span>
+                </Button>
+                <Button variant="ghost" className="flex-1 flex flex-col items-center justify-center h-full gap-1 text-muted-foreground hover:text-foreground" onClick={() => {
+                  setForwardModalOpen(true);
+                }}>
+                  <Reply className="w-5 h-5 transform scale-x-[-1]" />
+                  <span className="text-[10px] font-bold uppercase">Forward</span>
+                </Button>
+              </>
+            ) : (
+               <div className="flex-1 text-center text-[15px] font-semibold text-muted-foreground">
+                 {selectedMessages.length} messages selected
+               </div>
+            )}
+          </div>
+        )}
+        {!isSelectionMode && (
         <div className="p-2 flex items-end gap-2 border-t-0 bg-transparent mb-2 max-w-[800px] mx-auto w-full">
           <input ref={mediaRef} type="file" accept="image/*,video/*,application/pdf" multiple onChange={(e) => handleStageMedia(e, "document")} className="hidden" />
           <input ref={audioRef} type="file" accept="audio/*" multiple onChange={(e) => handleStageMedia(e, "audio")} className="hidden" />
@@ -2089,6 +2162,7 @@ const renderText = (text: string) => {
             </div>
           </div>
         </div>
+        )}
       </div>
       </div>{/* end main chat column */}
 
@@ -2324,18 +2398,23 @@ const renderText = (text: string) => {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
-        <AlertDialogContent className="rounded-3xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl">Delete message?</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm">This action is permanent and cannot be reversed.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-6">
-            <AlertDialogCancel className="rounded-xl h-11">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => confirmDelete && deleteMessage(confirmDelete)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl h-11">Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <Dialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <DialogContent className="rounded-2xl max-w-[320px] p-0 overflow-hidden text-center flex flex-col items-center">
+          <div className="p-6 pb-2">
+             <Trash2 className="w-12 h-12 text-destructive mx-auto mb-4" />
+             <DialogTitle className="text-xl mb-2 font-semibold">Delete Message{confirmDelete?.length && confirmDelete.length > 1 ? 's' : ''}?</DialogTitle>
+             <p className="text-sm text-muted-foreground mb-4">Are you sure you want to delete {confirmDelete?.length && confirmDelete.length > 1 ? `${confirmDelete.length} messages` : 'this message'}?</p>
+             <label className="flex items-center gap-2 cursor-pointer bg-secondary/30 p-2.5 rounded-xl text-sm justify-center font-medium border border-border/50 transition-colors hover:bg-secondary/50">
+               <input type="checkbox" checked={deleteForEveryone} onChange={e => setDeleteForEveryone(e.target.checked)} className="w-4 h-4 rounded-sm border-muted-foreground/30 text-primary focus:ring-primary accent-primary" />
+               Delete for everyone
+             </label>
+          </div>
+          <div className="flex w-full mt-4 border-t border-border/40">
+            <button onClick={() => setConfirmDelete(null)} className="flex-1 py-3.5 font-semibold text-foreground/80 hover:bg-secondary transition-colors border-r border-border/40">Cancel</button>
+            <button onClick={() => deleteMessage()} className="flex-1 py-3.5 font-bold text-destructive hover:bg-destructive/10 transition-colors">Delete</button>
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Removed User Profile Modal */}
 
       {secureViewMessage && (
@@ -2468,7 +2547,7 @@ const renderText = (text: string) => {
                       variant="ghost" 
                       size="sm" 
                       className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-1 text-xs h-8"
-                      onClick={() => deleteMessage(m.id)}
+                      onClick={() => setConfirmDelete([m.id])}
                     >
                       <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
                     </Button>
