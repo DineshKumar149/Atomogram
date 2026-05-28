@@ -246,11 +246,12 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
         });
 
         if (addToStory) {
-          await supabase.from("stories").insert({
+          const storyInserts = urls.map(url => ({
             user_id: user.id,
-            media_url: urls[0],
+            media_url: url,
             media_type: "image",
-          });
+          }));
+          await supabase.from("stories").insert(storyInserts);
         }
       }
 

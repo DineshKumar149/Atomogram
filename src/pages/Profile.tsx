@@ -603,7 +603,7 @@ const Profile = () => {
                 <button
                   onClick={() => coverInputRef.current?.click()}
                   disabled={coverUploading}
-                  className="hidden md:flex absolute top-4 right-4 w-9 h-9 items-center justify-center rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-colors text-white"
+                  className="absolute top-[56px] md:top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-colors text-white"
                 >
                   {coverUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
                 </button>

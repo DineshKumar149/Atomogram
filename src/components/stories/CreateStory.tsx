@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { X, Upload, ImageIcon, VideoIcon, Loader2, Wand2 } from "lucide-react";
+import { X, Upload, ImageIcon, VideoIcon, Loader2, Wand2, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -15,61 +15,60 @@ interface CreateStoryProps {
 
 export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
   const { user } = useAuth();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [caption, setCaption] = useState("");
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
-  // Edited blob from FilerobotEditor
+  // Edited blob from FilerobotEditor (only applies if 1 file is selected)
   const [editedBlob, setEditedBlob] = useState<Blob | null>(null);
   const [editedMimeType, setEditedMimeType] = useState<string>("image/png");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = useCallback((file: File) => {
-    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-      toast({
-        title: "Invalid file",
-        description: "Please select an image or video file.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleFileSelect = useCallback((files: File[]) => {
+    const validFiles = files.filter((file) => {
+      if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+        toast({ title: "Invalid file", description: `${file.name} is not an image or video.`, variant: "destructive" });
+        return false;
+      }
+      if (file.size > 100 * 1024 * 1024) {
+        toast({ title: "File too large", description: `${file.name} exceeds 100MB limit.`, variant: "destructive" });
+        return false;
+      }
+      return true;
+    });
 
-    if (file.size > 100 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Please select a file smaller than 100MB.",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (validFiles.length === 0) return;
 
-    const type = file.type.startsWith("video/") ? "video" : "image";
-    setMediaType(type);
-    setSelectedFile(file);
+    setSelectedFiles(validFiles);
     setEditedBlob(null);
 
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
+    const urls = validFiles.map(f => URL.createObjectURL(f));
+    setPreviewUrls(urls);
+    setCurrentSlide(0);
     
-    // Automatically open the editor if it's an image
-    if (type === "image") {
+    const type = validFiles[0].type.startsWith("video/") ? "video" : "image";
+    setMediaType(type);
+
+    // Automatically open the editor if exactly 1 image is selected
+    if (validFiles.length === 1 && type === "image") {
       setShowEditor(true);
     }
   }, []);
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) handleFileSelect(file);
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) handleFileSelect(files);
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) handleFileSelect(file);
+    const files = Array.from(e.dataTransfer.files || []);
+    if (files.length > 0) handleFileSelect(files);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -81,17 +80,16 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
     setDragOver(false);
   };
 
-  // Called when CE.SDK exports — store the blob for upload
   const handleEditorSave = useCallback((blob: Blob, mimeType: string) => {
     setEditedBlob(blob);
     setEditedMimeType(mimeType);
 
-    // Revoke old preview URL and create new one from edited blob
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (previewUrls.length > 0) {
+      URL.revokeObjectURL(previewUrls[0]);
+    }
     const newUrl = URL.createObjectURL(blob);
-    setPreviewUrl(newUrl);
+    setPreviewUrls([newUrl]);
 
-    // Update mediaType based on exported mimeType
     if (mimeType.startsWith("video/")) {
       setMediaType("video");
     } else {
@@ -104,78 +102,78 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
       title: "Edit applied ✨",
       description: "Your media has been edited. Click Share Story to publish.",
     });
-  }, [previewUrl]);
+  }, [previewUrls]);
+
+  const uploadSingleFile = async (file: File | Blob, mimeType: string, originalName: string) => {
+    const ext = mimeType.startsWith("video/") ? "mp4" : (originalName.split(".").pop() || "jpg");
+    const timestamp = Date.now() + Math.floor(Math.random() * 1000);
+    const filePath = `stories/${user?.id}/${timestamp}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("post-images")
+      .upload(filePath, file, { cacheControl: "3600", upsert: false, contentType: mimeType });
+
+    if (uploadError) throw new Error(uploadError.message);
+
+    const { data: urlData } = supabase.storage.from("post-images").getPublicUrl(filePath);
+    return urlData.publicUrl;
+  };
 
   const handleUpload = async () => {
-    if ((!selectedFile && !editedBlob) || !user) return;
+    if ((selectedFiles.length === 0 && !editedBlob) || !user) return;
 
     setUploading(true);
 
     try {
-      // Determine file to upload: edited blob OR original file
-      const fileToUpload = editedBlob || selectedFile!;
-      const ext = editedBlob
-        ? editedMimeType.startsWith("video/") ? "mp4" : "png"
-        : selectedFile!.name.split(".").pop() || (mediaType === "video" ? "mp4" : "jpg");
-
-      const timestamp = Date.now();
-      const filePath = `stories/${user.id}/${timestamp}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("post-images")
-        .upload(filePath, fileToUpload, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: editedBlob ? editedMimeType : (selectedFile?.type || "image/jpeg"),
-        });
-
-      if (uploadError) {
-        throw new Error(uploadError.message);
-      }
-
-      const { data: urlData } = supabase.storage
-        .from("post-images")
-        .getPublicUrl(filePath);
-      const mediaUrl = urlData.publicUrl;
-
       const expiresAt = addHours(new Date(), 24).toISOString();
 
-      const { error: insertError } = await supabase.from("stories").insert({
-        user_id: user.id,
-        media_url: mediaUrl,
-        media_type: mediaType,
-        caption: caption.trim() || null,
-        expires_at: expiresAt,
-      });
-
-      if (insertError) {
-        throw new Error(insertError.message);
+      if (editedBlob) {
+        // Upload edited single file
+        const mediaUrl = await uploadSingleFile(editedBlob, editedMimeType, "edited.png");
+        await supabase.from("stories").insert({
+          user_id: user.id,
+          media_url: mediaUrl,
+          media_type: mediaType,
+          caption: caption.trim() || null,
+          expires_at: expiresAt,
+        });
+      } else {
+        // Upload multiple files sequentially
+        const storyInserts = [];
+        for (const file of selectedFiles) {
+          const mediaUrl = await uploadSingleFile(file, file.type, file.name);
+          storyInserts.push({
+            user_id: user.id,
+            media_url: mediaUrl,
+            media_type: file.type.startsWith("video/") ? "video" : "image",
+            caption: caption.trim() || null,
+            expires_at: expiresAt,
+          });
+        }
+        await supabase.from("stories").insert(storyInserts);
       }
 
       toast({
         title: "Story published! ✨",
-        description: "Your story will be visible for 24 hours.",
+        description: selectedFiles.length > 1 ? "Your stories will be visible for 24 hours." : "Your story will be visible for 24 hours.",
       });
 
       onCreated();
       onClose();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Something went wrong";
-      toast({
-        title: "Upload failed",
-        description: message,
-        variant: "destructive",
-      });
+      toast({ title: "Upload failed", description: message, variant: "destructive" });
     } finally {
       setUploading(false);
     }
   };
 
   const handleRemoveFile = () => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setSelectedFile(null);
+    previewUrls.forEach(url => URL.revokeObjectURL(url));
+    setSelectedFiles([]);
     setEditedBlob(null);
-    setPreviewUrl(null);
+    setPreviewUrls([]);
+    setCurrentSlide(0);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -185,7 +183,7 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
       <FilerobotEditor
         onSave={handleEditorSave}
         onClose={() => setShowEditor(false)}
-        initialMediaUrl={previewUrl || undefined}
+        initialMediaUrl={previewUrls[0] || undefined}
         title="Edit Image Story"
       />
     );
@@ -222,7 +220,7 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
         {/* Body */}
         <div className="p-6 flex flex-col gap-5">
           {/* Media upload / preview area */}
-          {!previewUrl ? (
+          {previewUrls.length === 0 ? (
             <div
               className={`relative rounded-xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center gap-3 py-12 ${
                 dragOver
@@ -239,7 +237,7 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
               </div>
               <div className="text-center">
                 <p className="text-white font-medium text-sm">Drop your media here</p>
-                <p className="text-white/40 text-xs mt-1">or click to browse</p>
+                <p className="text-white/40 text-xs mt-1">Select multiple files at once</p>
               </div>
               <div className="flex items-center gap-3 mt-1">
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10">
@@ -254,6 +252,7 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
               <input
                 ref={fileInputRef}
                 type="file"
+                multiple
                 accept="image/*,video/*"
                 className="hidden"
                 onChange={handleFileInputChange}
@@ -261,16 +260,16 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
             </div>
           ) : (
             <div className="relative rounded-xl overflow-hidden aspect-[9/16] max-h-72 bg-black">
-              {mediaType === "video" ? (
+              {selectedFiles[currentSlide]?.type.startsWith("video/") || (editedBlob && editedMimeType.startsWith("video/")) ? (
                 <video
-                  src={previewUrl}
+                  src={previewUrls[currentSlide]}
                   className="w-full h-full object-cover"
                   controls
                   muted
                 />
               ) : (
                 <img
-                  src={previewUrl}
+                  src={previewUrls[currentSlide]}
                   alt="Preview"
                   className="w-full h-full object-cover"
                 />
@@ -289,17 +288,42 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
               <div className="absolute bottom-2 left-2 z-10">
                 <span
                   className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                    mediaType === "video"
+                    selectedFiles[currentSlide]?.type.startsWith("video/")
                       ? "bg-purple-600/80 text-white"
                       : "bg-indigo-600/80 text-white"
                   }`}
                 >
-                  {editedBlob ? "✨ Edited" : mediaType === "video" ? "Video" : "Image"}
+                  {editedBlob ? "✨ Edited" : selectedFiles[currentSlide]?.type.startsWith("video/") ? "Video" : "Image"}
                 </span>
               </div>
 
-              {/* Edit with FilerobotEditor button — only for images */}
-              {mediaType === "image" && (
+              {/* Carousel Navigation */}
+              {previewUrls.length > 1 && (
+                <>
+                  <div className="absolute top-3 left-3 bg-black/60 text-white text-xs font-bold px-2 py-1 rounded-full backdrop-blur-sm z-10">
+                    {currentSlide + 1}/{previewUrls.length}
+                  </div>
+                  {currentSlide > 0 && (
+                    <button
+                      onClick={() => setCurrentSlide(s => s - 1)}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-all z-10"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                  )}
+                  {currentSlide < previewUrls.length - 1 && (
+                    <button
+                      onClick={() => setCurrentSlide(s => s + 1)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-all z-10"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  )}
+                </>
+              )}
+
+              {/* Edit with FilerobotEditor button — only for single image */}
+              {selectedFiles.length === 1 && mediaType === "image" && (
                 <button
                   onClick={() => setShowEditor(true)}
                   disabled={uploading}
@@ -315,7 +339,7 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
           {/* Caption input */}
           <div className="flex flex-col gap-2">
             <label className="text-white/60 text-xs font-medium uppercase tracking-wider">
-              Caption <span className="text-white/30 normal-case">(optional)</span>
+              Caption <span className="text-white/30 normal-case">(optional, applied to all)</span>
             </label>
             <Textarea
               placeholder="Write a caption for your story..."
@@ -344,7 +368,7 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
             <Button
               className="flex-1 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/25 border-0 transition-all disabled:opacity-60"
               onClick={handleUpload}
-              disabled={(!selectedFile && !editedBlob) || uploading}
+              disabled={(previewUrls.length === 0) || uploading}
             >
               {uploading ? (
                 <span className="flex items-center gap-2">
@@ -354,7 +378,7 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
               ) : (
                 <span className="flex items-center gap-2">
                   <Upload className="w-4 h-4" />
-                  Share Story
+                  Share Stor{selectedFiles.length > 1 ? 'ies' : 'y'}
                 </span>
               )}
             </Button>

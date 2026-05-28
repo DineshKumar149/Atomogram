@@ -449,7 +449,7 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
       style={{ zIndex: 500 }}
     >
       {/* Top Left Atome Branding / Logo */}
-      <div className="absolute top-6 left-6 text-white font-bold text-xl tracking-wide select-none cursor-pointer hidden md:block">
+      <div className="absolute top-6 left-6 text-white font-bold text-xl tracking-wide select-none cursor-pointer hidden md:block z-50">
         Atome
       </div>
 
@@ -462,7 +462,7 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
       </button>
 
       {/* 3-Card Layout Flex Box */}
-      <div className="flex items-center justify-center gap-6 md:gap-14 w-full max-w-[95vw] h-[80vh] relative">
+      <div className="flex items-center justify-center gap-6 md:gap-14 w-full h-[100dvh] md:max-w-[95vw] md:h-[80vh] relative">
         {/* Left Floating Chevron (Group prev) */}
         {groupIndex > 0 && (
           <button
@@ -519,7 +519,7 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
           onMouseUp={handleTouchEnd}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className="relative w-full max-w-[400px] h-full rounded-2xl overflow-hidden border border-white/15 bg-black flex flex-col justify-between shadow-2xl transition-all duration-300 scale-100 z-30"
+          className="relative w-full h-[100dvh] md:h-full md:max-w-[400px] md:rounded-2xl overflow-hidden md:border border-white/15 bg-black flex flex-col justify-between shadow-2xl transition-all duration-300 scale-100 z-30"
         >
           {/* Progress indicators */}
           <div className={`absolute top-3.5 inset-x-3.5 flex gap-1 pointer-events-none z-40 transition-opacity duration-200 ${paused ? "opacity-0" : "opacity-100"}`}>
