@@ -154,6 +154,12 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [vanishModalOpen, setVanishModalOpen] = useState(false);
+  const [tempScheduleDate, setTempScheduleDate] = useState("");
+  const [tempScheduleTime, setTempScheduleTime] = useState("");
+  const [tempVanishSecs, setTempVanishSecs] = useState<number>(0);
+  const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
   const [nicknamePopoverOpen, setNicknamePopoverOpen] = useState(false);
   const [nicknameInput, setNicknameInput] = useState("");
   // Per-conversation nickname, stored in localStorage (only visible to this user)
@@ -956,7 +962,7 @@ const renderText = (text: string) => {
     return pub.publicUrl;
   };
 
-  const executeSendMediaAndText = async () => {
+  const executeSendMediaAndText = async (overrideScheduledDt?: string) => {
     if (!user || isBlocked) return;
     const body = text.trim();
     
@@ -981,8 +987,8 @@ const renderText = (text: string) => {
 
     const currentPending = [...pendingMedia];
     const currentReply = reply?.id ?? null;
-    let scheduledDt = null;
-    if (scheduledForDate && scheduledForTime) {
+    let scheduledDt = overrideScheduledDt || null;
+    if (!scheduledDt && scheduledForDate && scheduledForTime) {
       scheduledDt = new Date(`${scheduledForDate}T${scheduledForTime}`).toISOString();
     }
     let expiresAt = null;
@@ -1980,17 +1986,28 @@ const renderText = (text: string) => {
                <PopoverTrigger asChild>
                   <button id="long-press-send-trigger" className="hidden" />
                </PopoverTrigger>
-               <PopoverContent side="top" align="end" className="w-56 p-1.5 rounded-2xl mb-2 shadow-xl border-border/40">
+               <PopoverContent side="top" align="end" sideOffset={10} className="w-56 p-1.5 rounded-2xl mb-2 shadow-xl border-border/40 z-[90]">
                   <div className="flex flex-col gap-1">
-                     <button onClick={() => { setIsSilent(true); executeSendMediaAndText(); }} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-secondary w-full text-left transition-colors">
-                        <BellOff className="w-[18px] h-[18px] text-muted-foreground" />
-                        <span className="text-sm font-semibold text-foreground">Send without sound</span>
-                     </button>
+                     <PopoverClose asChild>
+                       <button onClick={() => { setIsSilent(true); executeSendMediaAndText(); }} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-secondary w-full text-left transition-colors">
+                          <BellOff className="w-[18px] h-[18px] text-muted-foreground" />
+                          <span className="text-sm font-semibold text-foreground">Send without sound</span>
+                       </button>
+                     </PopoverClose>
                      <div className="h-px bg-border/40 my-0.5" />
-                     <button onClick={() => setShowScheduledView(true)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-secondary w-full text-left transition-colors">
-                        <CalendarClock className="w-[18px] h-[18px] text-orange-500" />
-                        <span className="text-sm font-semibold text-foreground">Schedule message</span>
-                     </button>
+                     <PopoverClose asChild>
+                       <button onClick={() => { setEditingScheduleId(null); setScheduleModalOpen(true); }} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-secondary w-full text-left transition-colors">
+                          <CalendarClock className="w-[18px] h-[18px] text-orange-500" />
+                          <span className="text-sm font-semibold text-foreground">Schedule message</span>
+                       </button>
+                     </PopoverClose>
+                     <div className="h-px bg-border/40 my-0.5" />
+                     <PopoverClose asChild>
+                       <button onClick={() => setVanishModalOpen(true)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-secondary w-full text-left transition-colors">
+                          <Ghost className="w-[18px] h-[18px] text-destructive" />
+                          <span className="text-sm font-semibold text-destructive">Vanish mode</span>
+                       </button>
+                     </PopoverClose>
                   </div>
                </PopoverContent>
             </Popover>
@@ -2352,7 +2369,9 @@ const renderText = (text: string) => {
           
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {(() => {
-              const pending = messages.filter(m => m.status === "scheduled" && m.scheduled_for && new Date(m.scheduled_for) > new Date() && m.user_id === user?.id);
+              const pending = messages
+                .filter(m => m.status === "scheduled" && m.scheduled_for && new Date(m.scheduled_for) > new Date() && m.user_id === user?.id)
+                .sort((a, b) => new Date(a.scheduled_for!).getTime() - new Date(b.scheduled_for!).getTime());
               if (pending.length === 0) {
                 return (
                   <div className="flex flex-col items-center justify-center h-full text-muted-foreground opacity-60">
@@ -2375,9 +2394,18 @@ const renderText = (text: string) => {
                         </div>
                       )}
                     </div>
-                    <div className="text-xs font-bold text-orange-500 bg-orange-500/10 px-2 py-1 rounded-md shrink-0 flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
-                      {new Date(m.scheduled_for!).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <div className="text-xs font-bold text-orange-500 bg-orange-500/10 px-2 py-1 rounded-md flex items-center gap-1 cursor-pointer hover:bg-orange-500/20 transition-colors" onClick={() => {
+                        setEditingScheduleId(m.id);
+                        const dt = new Date(m.scheduled_for!);
+                        setTempScheduleDate(dt.toISOString().split('T')[0]);
+                        setTempScheduleTime(dt.toTimeString().slice(0, 5));
+                        setScheduleModalOpen(true);
+                      }}>
+                        <Clock className="w-3.5 h-3.5" />
+                        {new Date(m.scheduled_for!).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        <Edit2 className="w-3 h-3 ml-1 opacity-70" />
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 border-t border-border pt-2 mt-1">
@@ -2396,6 +2424,18 @@ const renderText = (text: string) => {
                     <Button 
                       variant="ghost" 
                       size="sm" 
+                      className="text-muted-foreground hover:text-foreground hover:bg-secondary flex-1 text-xs h-8"
+                      onClick={() => {
+                        setEditingMessage(m);
+                        setText(m.content || "");
+                        setShowScheduledView(false);
+                      }}
+                    >
+                      <Edit2 className="w-3.5 h-3.5 mr-1.5" /> Edit Text
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
                       className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-1 text-xs h-8"
                       onClick={() => deleteMessage(m.id)}
                     >
@@ -2408,6 +2448,83 @@ const renderText = (text: string) => {
           </div>
         </div>
       )}
+      {/* Schedule Message Dialog */}
+      <Dialog open={scheduleModalOpen} onOpenChange={setScheduleModalOpen}>
+        <DialogContent className="w-[90vw] max-w-sm rounded-3xl p-6 shadow-2xl border-border/50">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-xl font-bold text-center">Schedule Message</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground ml-1">Date</label>
+              <Input type="date" value={tempScheduleDate} onChange={e => setTempScheduleDate(e.target.value)} className="rounded-2xl h-12 bg-secondary/30 px-4" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground ml-1">Time</label>
+              <Input type="time" value={tempScheduleTime} onChange={e => setTempScheduleTime(e.target.value)} className="rounded-2xl h-12 bg-secondary/30 px-4" />
+            </div>
+            <Button onClick={() => {
+               if(tempScheduleDate && tempScheduleTime) {
+                 const sched = new Date(`${tempScheduleDate}T${tempScheduleTime}`);
+                 if(sched > new Date()) {
+                    if (editingScheduleId) {
+                       supabase.from("messages").update({ scheduled_for: sched.toISOString() }).eq("id", editingScheduleId).then();
+                       toast({ title: "Schedule updated" });
+                    } else {
+                       executeSendMediaAndText(sched.toISOString());
+                    }
+                    setScheduleModalOpen(false);
+                    setEditingScheduleId(null);
+                    setTempScheduleDate("");
+                    setTempScheduleTime("");
+                 } else {
+                    toast({ title: "Invalid time", description: "Schedule time must be in the future.", variant: "destructive" });
+                 }
+               }
+            }} className="w-full rounded-2xl h-12 font-bold text-base mt-2">
+              {editingScheduleId ? "Update Schedule" : "Schedule"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Vanish Mode Dialog */}
+      <Dialog open={vanishModalOpen} onOpenChange={setVanishModalOpen}>
+        <DialogContent className="w-[90vw] max-w-sm rounded-3xl p-6 shadow-2xl border-border/50 z-[100]">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-xl font-bold text-center">Vanish Mode</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            {[
+               { label: "View Once", val: 0 },
+               { label: "5 Seconds", val: 5 },
+               { label: "10 Seconds", val: 10 },
+               { label: "30 Seconds", val: 30 },
+               { label: "1 Minute", val: 60 },
+               { label: "Off", val: -1 },
+            ].map(opt => (
+               <button
+                 key={opt.val}
+                 onClick={() => {
+                   setTempVanishSecs(opt.val);
+                   if (opt.val === -1) {
+                      setVanishMode(false);
+                      supabase.from("conversations").update({ vanish_mode_enabled: false }).eq("id", conversationId).then();
+                   } else {
+                      setVanishMode(true);
+                      supabase.from("conversations").update({ vanish_mode_enabled: true }).eq("id", conversationId).then();
+                   }
+                   setVanishModalOpen(false);
+                   toast({ title: opt.val === -1 ? "Vanish Mode disabled" : `Vanish set to ${opt.label}` });
+                 }}
+                 className={`p-4 rounded-2xl text-left font-medium transition-all ${tempVanishSecs === opt.val ? 'bg-primary text-primary-foreground shadow-md' : 'bg-secondary/30 hover:bg-secondary/60'}`}
+               >
+                 {opt.label}
+               </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
