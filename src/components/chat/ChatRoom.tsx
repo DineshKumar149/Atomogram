@@ -2185,7 +2185,9 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
             This image will be permanently deleted after you close this screen.
           </div>
         </div>
-              {/* Telegram-style Scheduled Messages View */}
+      )}
+
+      {/* Telegram-style Scheduled Messages View */}
       {showScheduledView && (
         <div className="absolute inset-0 z-[1000] bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300">
           <div className="flex items-center gap-3 px-4 py-3 bg-secondary/30 border-b border-border shadow-sm">
