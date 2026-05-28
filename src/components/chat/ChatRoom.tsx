@@ -1984,7 +1984,7 @@ const renderText = (text: string) => {
           <div className="relative shrink-0 flex items-end pb-0.5">
             <Popover>
                <PopoverTrigger asChild>
-                  <button id="long-press-send-trigger" className="hidden" />
+                  <button id="long-press-send-trigger" className="absolute bottom-0.5 right-0 w-[44px] h-[44px] opacity-0 pointer-events-none" />
                </PopoverTrigger>
                <PopoverContent side="top" align="end" sideOffset={10} className="w-56 p-1.5 rounded-2xl mb-2 shadow-xl border-border/40 z-[90]">
                   <div className="flex flex-col gap-1">
