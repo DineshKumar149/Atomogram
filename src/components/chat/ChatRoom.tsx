@@ -92,6 +92,9 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   const [scheduledForDate, setScheduledForDate] = useState("");
   const [scheduledForTime, setScheduledForTime] = useState("");
   const [vanishMode, setVanishMode] = useState(false);
+  const [vanishTimerSeconds, setVanishTimerSeconds] = useState<number>(0);
+  const [showScheduledView, setShowScheduledView] = useState(false);
+  const [tick, setTick] = useState(0);
   
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -767,9 +770,15 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   useEffect(() => {
     // Initial cleanup on mount
     if (user?.id) {
-      supabase.from("messages").delete().eq("conversation_id", conversationId).eq("is_vanishing", true).then(() => {});
+      supabase.from("messages").delete().eq("conversation_id", conversationId).eq("is_vanishing", true).is("expires_at", null).then(() => {});
     }
   }, [conversationId, user?.id]);
+
+  useEffect(() => {
+    // Tick to refresh vanished messages dynamically
+    const interval = setInterval(() => setTick(t => t + 1), 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -825,6 +834,10 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
     if (scheduledForDate && scheduledForTime) {
       scheduledDt = new Date(`${scheduledForDate}T${scheduledForTime}`).toISOString();
     }
+    let expiresAt = null;
+    if (vanishMode && vanishTimerSeconds > 0) {
+      expiresAt = new Date(Date.now() + vanishTimerSeconds * 1000).toISOString();
+    }
     setText("");
     setPendingMedia([]);
     setReply(null);
@@ -838,6 +851,7 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
           is_vanishing: vanishMode,
           scheduled_for: scheduledDt,
           status: scheduledDt ? "scheduled" : "published",
+          expires_at: expiresAt,
         });
       }
       for (const item of currentPending) {
@@ -858,6 +872,7 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
             status: scheduledDt ? "scheduled" : "published",
             file_name: item.type === "pdf" ? item.file.name : null,
             file_size: item.type === "pdf" ? item.file.size : null,
+            expires_at: expiresAt,
           });
         }
       }
@@ -1256,8 +1271,10 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-5" style={conv?.wallpaper_url ? { backgroundImage: `url(${conv.wallpaper_url})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}>
         {(() => {
+          const now = new Date();
           const filteredMsgs = (searchQuery ? messages.filter(m => m.content?.toLowerCase().includes(searchQuery.toLowerCase())) : messages)
-            .filter(m => !(m.status === "scheduled" && m.scheduled_for && new Date(m.scheduled_for) > new Date()));
+            .filter(m => !(m.status === "scheduled" && m.scheduled_for && new Date(m.scheduled_for) > now))
+            .filter(m => !(m.expires_at && new Date(m.expires_at) < now));
           const callItems = callHistory.map(c => ({ ...c, _isCall: true, created_at: c.created_at }));
           const combined = [...filteredMsgs.map(m => ({ ...m, _isCall: false })), ...callItems]
             .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
@@ -1632,7 +1649,7 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
         <div className="px-4 pt-2 flex flex-wrap gap-2 text-xs">
           {vanishMode && (
             <div className="bg-destructive text-destructive-foreground px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse shadow-sm shadow-destructive/20 font-semibold border border-destructive-foreground/20">
-              <EyeOff className="w-3.5 h-3.5" /> Vanish Mode Active (Messages disappear when chat is closed)
+              <EyeOff className="w-3.5 h-3.5" /> Vanish Mode Active ({vanishTimerSeconds > 0 ? `Disappears in ${vanishTimerSeconds}s` : "On close"})
             </div>
           )}
           {(scheduledForDate || scheduledForTime) && (
@@ -1743,6 +1760,19 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
           <div className="flex gap-2">
             {voicePreview ? null : (
               <>
+                {(() => {
+                  const pendingScheduled = messages.filter(m => m.status === "scheduled" && m.scheduled_for && new Date(m.scheduled_for) > new Date() && m.user_id === user?.id);
+                  if (pendingScheduled.length > 0) {
+                    return (
+                      <Button type="button" size="icon" variant="ghost" className="rounded-full h-[52px] w-[52px] shrink-0 text-orange-500 hover:bg-secondary/80 relative transition-transform hover:scale-105" onClick={() => setShowScheduledView(true)}>
+                        <Calendar className="w-[24px] h-[24px]" />
+                        <span className="absolute top-2 right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold border-2 border-background shadow-sm">{pendingScheduled.length}</span>
+                      </Button>
+                    );
+                  }
+                  return null;
+                })()}
+
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button type="button" size="icon" variant="ghost" className="rounded-full h-[52px] w-[52px] shrink-0 text-muted-foreground hover:bg-secondary/80">
@@ -1750,13 +1780,31 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[280px] p-3 mb-2 shadow-xl border-border rounded-2xl flex flex-col gap-3" side="top" align="center">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
-                        <EyeOff className="w-4 h-4" /> Vanish Mode
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
+                          <EyeOff className="w-4 h-4" /> Vanish Mode
+                        </div>
+                        <Switch checked={vanishMode} onCheckedChange={setVanishMode} className="data-[state=checked]:bg-destructive" />
                       </div>
-                      <Switch checked={vanishMode} onCheckedChange={setVanishMode} className="data-[state=checked]:bg-destructive" />
+                      {vanishMode && (
+                        <div className="flex items-center justify-between gap-2 mt-1 px-1">
+                          <span className="text-xs text-muted-foreground font-medium flex-1">Disappear after:</span>
+                          <select 
+                            className="bg-secondary/50 text-xs rounded-md px-2 py-1 border-none focus:ring-0 text-foreground w-[120px] shadow-sm font-semibold cursor-pointer"
+                            value={vanishTimerSeconds}
+                            onChange={(e) => setVanishTimerSeconds(Number(e.target.value))}
+                          >
+                            <option value={0}>On Close</option>
+                            <option value={10}>10 Seconds</option>
+                            <option value={60}>1 Minute</option>
+                            <option value={3600}>1 Hour</option>
+                            <option value={86400}>24 Hours</option>
+                          </select>
+                        </div>
+                      )}
                     </div>
-                    <div className="w-full h-px bg-border" />
+                    <div className="w-full h-px bg-border/50" />
                     <div className="flex flex-col gap-2">
                       <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Schedule Message</span>
                       <div className="flex gap-2">
@@ -2135,6 +2183,76 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
           {/* Footer Warning */}
           <div className="absolute bottom-6 text-zinc-400 text-xs font-medium text-center px-6 leading-relaxed max-w-md">
             This image will be permanently deleted after you close this screen.
+          </div>
+        </div>
+              {/* Telegram-style Scheduled Messages View */}
+      {showScheduledView && (
+        <div className="absolute inset-0 z-[1000] bg-background flex flex-col animate-in slide-in-from-bottom-full duration-300">
+          <div className="flex items-center gap-3 px-4 py-3 bg-secondary/30 border-b border-border shadow-sm">
+            <Button variant="ghost" size="icon" onClick={() => setShowScheduledView(false)} className="rounded-full">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="flex-1">
+              <h2 className="text-lg font-bold">Scheduled Messages</h2>
+              <p className="text-xs text-muted-foreground">Will be sent automatically</p>
+            </div>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {(() => {
+              const pending = messages.filter(m => m.status === "scheduled" && m.scheduled_for && new Date(m.scheduled_for) > new Date() && m.user_id === user?.id);
+              if (pending.length === 0) {
+                return (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground opacity-60">
+                    <Calendar className="w-16 h-16 mb-4 opacity-50" />
+                    <p>No scheduled messages</p>
+                  </div>
+                );
+              }
+              return pending.map(m => (
+                <div key={m.id} className="bg-secondary/50 rounded-2xl p-4 border border-border shadow-sm flex flex-col gap-3 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-orange-500" />
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      {m.content && <p className="text-sm font-medium whitespace-pre-wrap">{m.content}</p>}
+                      {m.media_url && m.media_type === "image" && <img src={m.media_url} alt="" className="h-20 rounded-xl mt-2 object-cover" />}
+                      {m.media_url && m.media_type === "pdf" && (
+                        <div className="flex items-center gap-2 mt-2 bg-background p-2 rounded-xl">
+                          <FileText className="w-5 h-5 text-red-500" />
+                          <span className="text-xs font-semibold truncate">{m.file_name}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-xs font-bold text-orange-500 bg-orange-500/10 px-2 py-1 rounded-md shrink-0 flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      {new Date(m.scheduled_for!).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 border-t border-border pt-2 mt-1">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-primary hover:text-primary hover:bg-primary/10 flex-1 text-xs h-8"
+                      onClick={async () => {
+                        await supabase.from("messages").update({ status: "sent", scheduled_for: null }).eq("id", m.id);
+                        toast({ title: "Message sent now" });
+                        if (pending.length === 1) setShowScheduledView(false);
+                      }}
+                    >
+                      <Send className="w-3.5 h-3.5 mr-1.5" /> Send Now
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-1 text-xs h-8"
+                      onClick={() => deleteMessage(m.id)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
+                    </Button>
+                  </div>
+                </div>
+              ));
+            })()}
           </div>
         </div>
       )}

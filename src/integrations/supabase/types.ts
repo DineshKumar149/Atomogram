@@ -56,6 +56,7 @@ export type Database = {
           type: string
           wallpaper_url: string | null
           vanish_mode_enabled: boolean
+            vanish_timer_seconds: number | null
         }
         Insert: {
           avatar_url?: string | null
@@ -66,6 +67,7 @@ export type Database = {
           type: string
           wallpaper_url?: string | null
           vanish_mode_enabled?: boolean
+            vanish_timer_seconds?: number | null
         }
         Update: {
           avatar_url?: string | null
@@ -76,6 +78,7 @@ export type Database = {
           type?: string
           wallpaper_url?: string | null
           vanish_mode_enabled?: boolean
+            vanish_timer_seconds?: number | null
         }
         Relationships: []
       }
@@ -180,6 +183,7 @@ export type Database = {
           status: string
           file_name: string | null
           file_size: number | null
+            expires_at: string | null
         }
         Insert: {
           content?: string | null
@@ -198,6 +202,7 @@ export type Database = {
           status?: string
           file_name?: string | null
           file_size?: number | null
+            expires_at?: string | null
         }
         Update: {
           content?: string | null
@@ -216,6 +221,7 @@ export type Database = {
           status?: string
           file_name?: string | null
           file_size?: number | null
+            expires_at?: string | null
         }
         Relationships: [
           {
