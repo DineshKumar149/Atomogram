@@ -86,6 +86,11 @@ const Gallery = () => {
            if (item.profiles?.is_private) {
               return followingIds.includes(item.user_id);
            }
+           
+           if (item.status === "scheduled" && item.scheduled_for && new Date(item.scheduled_for) > new Date()) {
+             return false;
+           }
+
            return true;
         });
         setMedia(visibleMedia);

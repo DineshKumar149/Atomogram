@@ -55,6 +55,7 @@ export type Database = {
           name: string | null
           type: string
           wallpaper_url: string | null
+          vanish_mode_enabled: boolean
         }
         Insert: {
           avatar_url?: string | null
@@ -64,6 +65,7 @@ export type Database = {
           name?: string | null
           type: string
           wallpaper_url?: string | null
+          vanish_mode_enabled?: boolean
         }
         Update: {
           avatar_url?: string | null
@@ -73,6 +75,7 @@ export type Database = {
           name?: string | null
           type?: string
           wallpaper_url?: string | null
+          vanish_mode_enabled?: boolean
         }
         Relationships: []
       }
@@ -170,6 +173,13 @@ export type Database = {
           media_url: string | null
           reply_to_id: string | null
           user_id: string
+          max_views: number | null
+          view_count: number
+          is_vanishing: boolean
+          scheduled_for: string | null
+          status: string
+          file_name: string | null
+          file_size: number | null
         }
         Insert: {
           content?: string | null
@@ -181,6 +191,13 @@ export type Database = {
           media_url?: string | null
           reply_to_id?: string | null
           user_id: string
+          max_views?: number | null
+          view_count?: number
+          is_vanishing?: boolean
+          scheduled_for?: string | null
+          status?: string
+          file_name?: string | null
+          file_size?: number | null
         }
         Update: {
           content?: string | null
@@ -192,6 +209,13 @@ export type Database = {
           media_url?: string | null
           reply_to_id?: string | null
           user_id?: string
+          max_views?: number | null
+          view_count?: number
+          is_vanishing?: boolean
+          scheduled_for?: string | null
+          status?: string
+          file_name?: string | null
+          file_size?: number | null
         }
         Relationships: [
           {
@@ -288,6 +312,8 @@ export type Database = {
           alt_text: string | null
           music_title: string | null
           music_url: string | null
+          scheduled_for: string | null
+          status: string
         }
         Insert: {
           caption?: string | null
@@ -305,6 +331,8 @@ export type Database = {
           alt_text?: string | null
           music_title?: string | null
           music_url?: string | null
+          scheduled_for?: string | null
+          status?: string
         }
         Update: {
           caption?: string | null
@@ -342,6 +370,8 @@ export type Database = {
           caption: string | null
           created_at: string
           expires_at: string
+          scheduled_for: string | null
+          status: string
         }
         Insert: {
           id?: string
@@ -351,6 +381,8 @@ export type Database = {
           caption?: string | null
           created_at?: string
           expires_at: string
+          scheduled_for?: string | null
+          status?: string
         }
         Update: {
           id?: string
@@ -360,6 +392,8 @@ export type Database = {
           caption?: string | null
           created_at?: string
           expires_at?: string
+          scheduled_for?: string | null
+          status?: string
         }
         Relationships: [
           {

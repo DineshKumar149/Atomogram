@@ -23,6 +23,8 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
+  const [scheduledForDate, setScheduledForDate] = useState("");
+  const [scheduledForTime, setScheduledForTime] = useState("");
   // Edited blob from FilerobotEditor (only applies if 1 file is selected)
   const [editedBlob, setEditedBlob] = useState<Blob | null>(null);
   const [editedMimeType, setEditedMimeType] = useState<string>("image/png");
@@ -126,6 +128,10 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
 
     try {
       const expiresAt = addHours(new Date(), 24).toISOString();
+      let scheduledDt = null;
+      if (scheduledForDate && scheduledForTime) {
+        scheduledDt = new Date(`${scheduledForDate}T${scheduledForTime}`).toISOString();
+      }
 
       if (editedBlob) {
         // Upload edited single file
@@ -136,6 +142,8 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
           media_type: mediaType,
           caption: caption.trim() || null,
           expires_at: expiresAt,
+          scheduled_for: scheduledDt,
+          status: scheduledDt ? "scheduled" : "published",
         });
       } else {
         // Upload multiple files sequentially
@@ -148,6 +156,8 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
             media_type: file.type.startsWith("video/") ? "video" : "image",
             caption: caption.trim() || null,
             expires_at: expiresAt,
+            scheduled_for: scheduledDt,
+            status: scheduledDt ? "scheduled" : "published",
           });
         }
         await supabase.from("stories").insert(storyInserts);
@@ -352,6 +362,26 @@ export default function CreateStory({ onClose, onCreated }: CreateStoryProps) {
             />
             <div className="flex justify-end">
               <span className="text-white/30 text-xs">{caption.length}/200</span>
+            </div>
+          </div>
+
+          {/* Schedule Input */}
+          <div className="flex flex-col gap-2 mb-1 bg-white/5 p-3 rounded-xl border border-white/10">
+            <span className="text-xs font-semibold text-white/80">Schedule story (Optional)</span>
+            <div className="flex gap-2">
+              <input 
+                type="date" 
+                className="h-8 text-xs flex-1 bg-transparent border border-white/20 rounded-md px-2 text-white" 
+                value={scheduledForDate}
+                onChange={e => setScheduledForDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+              />
+              <input 
+                type="time" 
+                className="h-8 text-xs flex-1 bg-transparent border border-white/20 rounded-md px-2 text-white" 
+                value={scheduledForTime}
+                onChange={e => setScheduledForTime(e.target.value)}
+              />
             </div>
           </div>
 

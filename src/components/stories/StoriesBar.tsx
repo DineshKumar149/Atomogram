@@ -125,11 +125,16 @@ export default function StoriesBar({ onOpenViewer, onOpenCreate }: StoriesBarPro
     const viewedIds = new Set<string>((viewsData || []).map((v: { story_id: string }) => v.story_id));
     setViewedStoryIds(viewedIds);
 
-    const stories: Story[] = (storiesData || []).map((s: Story) => ({
-      ...s,
-      profile: profilesMap[s.user_id],
-      has_viewed: viewedIds.has(s.id),
-    }));
+    const stories: Story[] = (storiesData || [])
+      .filter((s: any) => {
+        if (s.status === "scheduled" && s.scheduled_for && new Date(s.scheduled_for) > new Date()) return false;
+        return true;
+      })
+      .map((s: any) => ({
+        ...s,
+        profile: profilesMap[s.user_id],
+        has_viewed: viewedIds.has(s.id),
+      }));
 
     const myStories = stories.filter((s) => s.user_id === user.id);
     setOwnStories(myStories);

@@ -55,6 +55,8 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
   const [musicStartTime, setMusicStartTime] = useState(0);
   const [addToStory, setAddToStory] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [scheduledForDate, setScheduledForDate] = useState("");
+  const [scheduledForTime, setScheduledForTime] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -102,6 +104,8 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
     setMusicStartTime(0);
     setAddToStory(false);
     setShowAdvanced(false);
+    setScheduledForDate("");
+    setScheduledForTime("");
     setShowCustomEditor(false);
     onClose();
   };
@@ -175,6 +179,10 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
         const url = await uploadFileToStorage(editedBlob, fileName, mimeType);
 
         const musicUrlWithTime = selectedMusic?.previewUrl ? `${selectedMusic.previewUrl}#t=${musicStartTime}` : null;
+        let scheduledDt = null;
+        if (scheduledForDate && scheduledForTime) {
+          scheduledDt = new Date(`${scheduledForDate}T${scheduledForTime}`).toISOString();
+        }
 
         await supabase.from("posts").insert({
           user_id: user.id,
@@ -187,6 +195,8 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
           alt_text: altText.trim() || null,
           music_title: musicTitle.trim() || null,
           music_url: musicUrlWithTime,
+          scheduled_for: scheduledDt,
+          status: scheduledDt ? "scheduled" : "published",
         });
 
         if (addToStory) {
@@ -194,6 +204,8 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
             user_id: user.id,
             media_url: url,
             media_type: isVid ? "video" : "image",
+            scheduled_for: scheduledDt,
+            status: scheduledDt ? "scheduled" : "published",
           });
         }
       } else if (selectedFiles.length === 1) {
@@ -202,6 +214,10 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
         const url = await uploadFileToStorage(file, file.name, file.type);
 
         const musicUrlWithTime = selectedMusic?.previewUrl ? `${selectedMusic.previewUrl}#t=${musicStartTime}` : null;
+        let scheduledDt = null;
+        if (scheduledForDate && scheduledForTime) {
+          scheduledDt = new Date(`${scheduledForDate}T${scheduledForTime}`).toISOString();
+        }
 
         await supabase.from("posts").insert({
           user_id: user.id,
@@ -214,6 +230,8 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
           alt_text: altText.trim() || null,
           music_title: musicTitle.trim() || null,
           music_url: musicUrlWithTime,
+          scheduled_for: scheduledDt,
+          status: scheduledDt ? "scheduled" : "published",
         });
 
         if (addToStory) {
@@ -221,6 +239,8 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
             user_id: user.id,
             media_url: url,
             media_type: isVid ? "video" : "image",
+            scheduled_for: scheduledDt,
+            status: scheduledDt ? "scheduled" : "published",
           });
         }
       } else {
@@ -231,6 +251,10 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
         }
 
         const musicUrlWithTime = selectedMusic?.previewUrl ? `${selectedMusic.previewUrl}#t=${musicStartTime}` : null;
+        let scheduledDt = null;
+        if (scheduledForDate && scheduledForTime) {
+          scheduledDt = new Date(`${scheduledForDate}T${scheduledForTime}`).toISOString();
+        }
 
         await supabase.from("posts").insert({
           user_id: user.id,
@@ -243,6 +267,8 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
           alt_text: altText.trim() || null,
           music_title: musicTitle.trim() || null,
           music_url: musicUrlWithTime,
+          scheduled_for: scheduledDt,
+          status: scheduledDt ? "scheduled" : "published",
         });
 
         if (addToStory) {
@@ -250,6 +276,8 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
             user_id: user.id,
             media_url: url,
             media_type: "image",
+            scheduled_for: scheduledDt,
+            status: scheduledDt ? "scheduled" : "published",
           }));
           await supabase.from("stories").insert(storyInserts);
         }
@@ -548,6 +576,24 @@ const GlobalCreateModal = ({ isOpen, onClose }: GlobalCreateModalProps) => {
                       )}
                     </div>
                     <div className="p-4 border-t border-border/50 mt-auto shrink-0 bg-card z-10 sticky bottom-0">
+                      <div className="flex flex-col gap-2 mb-3 bg-secondary/20 p-3 rounded-xl border border-border/40">
+                        <span className="text-xs font-semibold text-foreground">Schedule post (Optional)</span>
+                        <div className="flex gap-2">
+                          <Input 
+                            type="date" 
+                            className="h-8 text-xs flex-1 bg-transparent border-border/50" 
+                            value={scheduledForDate}
+                            onChange={e => setScheduledForDate(e.target.value)}
+                            min={new Date().toISOString().split('T')[0]}
+                          />
+                          <Input 
+                            type="time" 
+                            className="h-8 text-xs flex-1 bg-transparent border-border/50" 
+                            value={scheduledForTime}
+                            onChange={e => setScheduledForTime(e.target.value)}
+                          />
+                        </div>
+                      </div>
                       <Button
                         onClick={handleSharePost}
                         disabled={uploading}

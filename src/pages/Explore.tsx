@@ -119,10 +119,15 @@ const Explore = () => {
       const profileMap = new Map((profiles || []).map((p) => [p.user_id, p as Profile]));
 
       setPosts(
-        postsData.map((post) => ({
-          ...(post as Post),
-          authorProfile: profileMap.get(post.user_id) || null,
-        }))
+        postsData
+          .filter(post => {
+            if (post.status === "scheduled" && post.scheduled_for && new Date(post.scheduled_for) > new Date()) return false;
+            return true;
+          })
+          .map((post) => ({
+            ...(post as Post),
+            authorProfile: profileMap.get(post.user_id) || null,
+          }))
       );
     } catch (err: any) {
       console.error(err);
