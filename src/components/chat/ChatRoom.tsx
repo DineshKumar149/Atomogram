@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Mic, Square, Send, Paperclip, Smile, Reply, Trash2, X, Users, Check, 
@@ -1924,31 +1925,30 @@ const renderText = (text: string) => {
         </div>
 
         {isSelectionMode && (
-          <div className="p-2 flex items-center justify-between gap-2 border-t border-border/40 bg-background mb-0 max-w-[800px] mx-auto w-full h-14">
-            {selectedMessages.length === 1 ? (
-              <>
-                <Button variant="ghost" className="flex-1 flex flex-col items-center justify-center h-full gap-1 text-muted-foreground hover:text-foreground" onClick={() => {
-                  const m = messages.find(x => x.id === selectedMessages[0]);
-                  if (m) {
-                    setReply(m);
-                    setSelectedMessages([]);
-                  }
-                }}>
-                  <Reply className="w-5 h-5" />
-                  <span className="text-[10px] font-bold uppercase">Reply</span>
-                </Button>
-                <Button variant="ghost" className="flex-1 flex flex-col items-center justify-center h-full gap-1 text-muted-foreground hover:text-foreground" onClick={() => {
-                  setForwardModalOpen(true);
-                }}>
-                  <Reply className="w-5 h-5 transform scale-x-[-1]" />
-                  <span className="text-[10px] font-bold uppercase">Forward</span>
-                </Button>
-              </>
-            ) : (
-               <div className="flex-1 text-center text-[15px] font-semibold text-muted-foreground">
-                 {selectedMessages.length} messages selected
+          <div className="p-2 flex items-center gap-2 border-t border-border/30 bg-background/95 backdrop-blur-md mb-0 max-w-[800px] mx-auto w-full h-[60px] shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.3)]">
+            <Button variant="ghost" disabled={selectedMessages.length !== 1} className="flex-1 flex flex-col items-center justify-center h-full gap-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors rounded-xl disabled:opacity-30 disabled:hover:bg-transparent" onClick={() => {
+              const m = messages.find(x => x.id === selectedMessages[0]);
+              if (m) {
+                setReply(m);
+                setSelectedMessages([]);
+              }
+            }}>
+              <Reply className="w-[22px] h-[22px]" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">Reply</span>
+            </Button>
+            
+            <div className="flex-1 flex items-center justify-center">
+               <div className="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-[13px] font-bold tracking-wide shadow-sm border border-primary/20">
+                 {selectedMessages.length} Selected
                </div>
-            )}
+            </div>
+
+            <Button variant="ghost" className="flex-1 flex flex-col items-center justify-center h-full gap-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors rounded-xl" onClick={() => {
+              setForwardModalOpen(true);
+            }}>
+              <Reply className="w-[22px] h-[22px] transform scale-x-[-1]" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">Forward</span>
+            </Button>
           </div>
         )}
         {!isSelectionMode && (
@@ -2404,9 +2404,9 @@ const renderText = (text: string) => {
              <Trash2 className="w-12 h-12 text-destructive mx-auto mb-4" />
              <DialogTitle className="text-xl mb-2 font-semibold">Delete Message{confirmDelete?.length && confirmDelete.length > 1 ? 's' : ''}?</DialogTitle>
              <p className="text-sm text-muted-foreground mb-4">Are you sure you want to delete {confirmDelete?.length && confirmDelete.length > 1 ? `${confirmDelete.length} messages` : 'this message'}?</p>
-             <label className="flex items-center gap-2 cursor-pointer bg-secondary/30 p-2.5 rounded-xl text-sm justify-center font-medium border border-border/50 transition-colors hover:bg-secondary/50">
-               <input type="checkbox" checked={deleteForEveryone} onChange={e => setDeleteForEveryone(e.target.checked)} className="w-4 h-4 rounded-sm border-muted-foreground/30 text-primary focus:ring-primary accent-primary" />
-               Delete for everyone
+             <label className="flex items-center gap-3 cursor-pointer bg-secondary/50 hover:bg-secondary p-3 rounded-xl text-sm justify-center font-semibold border border-border/60 transition-all dark:bg-zinc-800/80 dark:hover:bg-zinc-800 dark:border-zinc-700/80 w-full shadow-sm">
+               <Checkbox checked={deleteForEveryone} onCheckedChange={(checked) => setDeleteForEveryone(!!checked)} className="w-5 h-5 rounded-[6px] border-2 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground dark:border-zinc-500" />
+               <span className="text-foreground/90">Delete for everyone</span>
              </label>
           </div>
           <div className="flex w-full mt-4 border-t border-border/40">
