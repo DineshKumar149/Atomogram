@@ -363,24 +363,17 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
   };
 
   // Swipe & Touch Gestures
-
-  const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
+  const handlePointerDown = (e: React.PointerEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest(".interactive-zone")) return;
     
-    if ('touches' in e) {
-      touchStartXRef.current = e.touches[0].clientX;
-      touchStartYRef.current = e.touches[0].clientY;
-    } else {
-      touchStartXRef.current = (e as React.MouseEvent).clientX;
-      touchStartYRef.current = (e as React.MouseEvent).clientY;
-    }
-    
+    touchStartXRef.current = e.clientX;
+    touchStartYRef.current = e.clientY;
     touchStartTimeRef.current = Date.now();
     setPaused(true);
   };
 
-  const handleTouchEnd = (e: React.TouchEvent | React.MouseEvent) => {
+  const handlePointerUp = (e: React.PointerEvent) => {
     if (touchStartXRef.current === null || touchStartYRef.current === null) {
       setPaused(false);
       return;
@@ -392,17 +385,8 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
       return;
     }
 
-    let touchEndX: number;
-    let touchEndY: number;
-
-    if ('changedTouches' in e) {
-      touchEndX = (e as React.TouchEvent).changedTouches[0].clientX;
-      touchEndY = (e as React.TouchEvent).changedTouches[0].clientY;
-    } else {
-      touchEndX = (e as React.MouseEvent).clientX;
-      touchEndY = (e as React.MouseEvent).clientY;
-    }
-
+    const touchEndX = e.clientX;
+    const touchEndY = e.clientY;
     const diffX = touchEndX - touchStartXRef.current;
     const diffY = touchEndY - touchStartYRef.current;
     const duration = touchStartTimeRef.current ? Date.now() - touchStartTimeRef.current : 0;
@@ -528,11 +512,10 @@ export default function StoryViewer({ groups, startGroupIndex, onClose }: StoryV
 
         {/* 2. CENTER CARD (ACTIVE STORY USER) */}
         <div
-          onMouseDown={handleTouchStart}
-          onMouseUp={handleTouchEnd}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          className="relative w-full h-[100dvh] md:h-full md:max-w-[400px] md:rounded-2xl overflow-hidden md:border border-white/15 bg-black flex flex-col justify-between shadow-2xl transition-all duration-300 scale-100 z-30"
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          className="relative w-full h-[100dvh] md:h-full md:max-w-[400px] md:rounded-2xl overflow-hidden md:border border-white/15 bg-black flex flex-col justify-between shadow-2xl transition-all duration-300 scale-100 z-30 touch-none"
         >
           {/* Progress indicators */}
           <div className={`absolute top-3.5 inset-x-3.5 flex gap-1 pointer-events-none z-40 transition-opacity duration-200 ${paused ? "opacity-0" : "opacity-100"}`}>
