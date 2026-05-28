@@ -87,7 +87,6 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   const [isSilent, setIsSilent] = useState(false);
   const touchStartRef = useRef<{ id: string; x: number, y: number, time: number }>({ id: "", x: 0, y: 0, time: 0 });
   const touchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const longPressFired = useRef(false);
   
   const [forwardModalOpen, setForwardModalOpen] = useState(false);
   const [recentChats, setRecentChats] = useState<any[]>([]);
@@ -159,7 +158,6 @@ const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?:
   const [vanishModalOpen, setVanishModalOpen] = useState(false);
   const [tempScheduleDate, setTempScheduleDate] = useState("");
   const [tempScheduleTime, setTempScheduleTime] = useState("");
-  const [tempScheduleText, setTempScheduleText] = useState("");
   const [tempVanishSecs, setTempVanishSecs] = useState<number>(0);
   const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
   const [nicknamePopoverOpen, setNicknamePopoverOpen] = useState(false);
@@ -1037,7 +1035,7 @@ const renderText = (text: string) => {
         }
       }
       // Notification
-      if (conv?.type !== "group") {
+      if (conv?.type !== "group" && !scheduledDt) {
         const otherId = getOtherUserId();
         if (otherId) {
           await supabase.from("notifications").insert({
@@ -1953,6 +1951,7 @@ const renderText = (text: string) => {
               </Button>
             )}
             
+            {/* VIEW ONCE TOGGLE (Optional, keep inside right if media is attached) */}
             {pendingMedia.length > 0 && !recording && !voicePreview && (
               <Button
                 type="button"
@@ -1981,6 +1980,7 @@ const renderText = (text: string) => {
             )}
           </div>
 
+          {/* SEND / MIC BUTTON - OUTSIDE RIGHT */}
           <div className="relative shrink-0 flex items-end pb-0.5">
             <Popover>
                <PopoverTrigger asChild>
@@ -2012,46 +2012,43 @@ const renderText = (text: string) => {
                </PopoverContent>
             </Popover>
 
-            <Button 
-              type="button" 
-              size="icon" 
-              onContextMenu={(e) => {
-                e.preventDefault();
-                document.getElementById('long-press-send-trigger')?.click();
-              }}
-              onTouchStart={(e) => {
-                longPressFired.current = false;
-                touchTimeoutRef.current = setTimeout(() => {
-                  longPressFired.current = true;
-                  if (navigator.vibrate) navigator.vibrate(50);
-                  document.getElementById('long-press-send-trigger')?.click();
-                }, 500);
-              }}
-              onTouchEnd={() => clearTimeout(touchTimeoutRef.current!)}
-              onTouchMove={() => clearTimeout(touchTimeoutRef.current!)}
-              onClick={(e) => {
-                clearTimeout(touchTimeoutRef.current!);
-                if (longPressFired.current) {
-                  e.preventDefault();
-                  return;
-                }
-                if (recording) {
-                   stopRecording();
-                } else if (text.trim() || pendingMedia.length > 0 || voicePreview) {
-                   executeSendMediaAndText();
-                } else {
-                   startRecording();
-                }
-              }}
-              disabled={isUploading || isBlocked} 
-              className={`rounded-full h-[46px] w-[46px] shadow-sm transition-all duration-300 ml-1.5 shrink-0 ${
-                 recording ? "bg-red-500 text-white hover:bg-red-600 animate-pulse" :
-                 (text.trim() || pendingMedia.length > 0 || voicePreview) ? "bg-[#3390ec] text-white hover:bg-[#3390ec]/90 hover:scale-105 active:scale-95" : 
-                 "bg-transparent text-muted-foreground hover:bg-secondary"
-              }`}
-            >
-              {recording ? <Square className="w-5 h-5 fill-current" /> : (text.trim() || pendingMedia.length > 0 || voicePreview) ? <Send className="w-[20px] h-[20px] ml-0.5" /> : <Mic className="w-[24px] h-[24px]" />}
-            </Button>
+            <div 
+               onContextMenu={(e) => {
+                 e.preventDefault();
+                 document.getElementById('long-press-send-trigger')?.click();
+               }}
+               onTouchStart={(e) => {
+                 touchTimeoutRef.current = setTimeout(() => {
+                   if (navigator.vibrate) navigator.vibrate(50);
+                   document.getElementById('long-press-send-trigger')?.click();
+                 }, 500);
+               }}
+               onTouchEnd={() => clearTimeout(touchTimeoutRef.current!)}
+               onTouchMove={() => clearTimeout(touchTimeoutRef.current!)}
+             >
+                <Button 
+                  type="button" 
+                  size="icon" 
+                  onClick={(e) => {
+                    clearTimeout(touchTimeoutRef.current!);
+                    if (recording) {
+                       stopRecording();
+                    } else if (text.trim() || pendingMedia.length > 0 || voicePreview) {
+                       executeSendMediaAndText();
+                    } else {
+                       startRecording();
+                    }
+                  }}
+                  disabled={isUploading || isBlocked} 
+                  className={`rounded-full h-[46px] w-[46px] shadow-sm transition-all duration-300 ${
+                     recording ? "bg-red-500 text-white hover:bg-red-600 animate-pulse" :
+                     (text.trim() || pendingMedia.length > 0 || voicePreview) ? "bg-[#3390ec] text-white hover:bg-[#3390ec]/90 hover:scale-105 active:scale-95" : 
+                     "bg-transparent text-muted-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {recording ? <Square className="w-5 h-5 fill-current" /> : (text.trim() || pendingMedia.length > 0 || voicePreview) ? <Send className="w-[20px] h-[20px] ml-0.5" /> : <Mic className="w-[24px] h-[24px]" />}
+                </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -2401,9 +2398,10 @@ const renderText = (text: string) => {
                       <div className="text-xs font-bold text-orange-500 bg-orange-500/10 px-2 py-1 rounded-md flex items-center gap-1 cursor-pointer hover:bg-orange-500/20 transition-colors" onClick={() => {
                         setEditingScheduleId(m.id);
                         const dt = new Date(m.scheduled_for!);
-                        setTempScheduleDate(dt.toISOString().split('T')[0]);
+                        const offset = dt.getTimezoneOffset() * 60000;
+                        const localDate = new Date(dt.getTime() - offset).toISOString().split('T')[0];
+                        setTempScheduleDate(localDate);
                         setTempScheduleTime(dt.toTimeString().slice(0, 5));
-                        setTempScheduleText(m.content || "");
                         setScheduleModalOpen(true);
                       }}>
                         <Clock className="w-3.5 h-3.5" />
@@ -2418,7 +2416,7 @@ const renderText = (text: string) => {
                       size="sm" 
                       className="text-primary hover:text-primary hover:bg-primary/10 flex-1 text-xs h-8"
                       onClick={async () => {
-                        await supabase.from("messages").update({ status: "sent", scheduled_for: null }).eq("id", m.id);
+                        await supabase.from("messages").update({ status: "published", scheduled_for: null }).eq("id", m.id);
                         toast({ title: "Message sent now" });
                         if (pending.length === 1) setShowScheduledView(false);
                       }}
@@ -2460,15 +2458,6 @@ const renderText = (text: string) => {
           </DialogHeader>
           <div className="space-y-5">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground ml-1">Message</label>
-              <textarea 
-                value={tempScheduleText} 
-                onChange={e => setTempScheduleText(e.target.value)} 
-                className="w-full rounded-2xl bg-secondary/30 px-4 py-3 min-h-[80px] resize-none outline-none focus:ring-2 focus:ring-primary/50 text-[15px]" 
-                placeholder="Message content" 
-              />
-            </div>
-            <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground ml-1">Date</label>
               <Input type="date" value={tempScheduleDate} onChange={e => setTempScheduleDate(e.target.value)} className="rounded-2xl h-12 bg-secondary/30 px-4" />
             </div>
@@ -2481,7 +2470,7 @@ const renderText = (text: string) => {
                  const sched = new Date(`${tempScheduleDate}T${tempScheduleTime}`);
                  if(sched > new Date()) {
                     if (editingScheduleId) {
-                       supabase.from("messages").update({ scheduled_for: sched.toISOString(), content: tempScheduleText.trim() }).eq("id", editingScheduleId).then();
+                       supabase.from("messages").update({ scheduled_for: sched.toISOString() }).eq("id", editingScheduleId).then();
                        toast({ title: "Schedule updated" });
                     } else {
                        executeSendMediaAndText(sched.toISOString());
@@ -2490,7 +2479,6 @@ const renderText = (text: string) => {
                     setEditingScheduleId(null);
                     setTempScheduleDate("");
                     setTempScheduleTime("");
-                    setTempScheduleText("");
                  } else {
                     toast({ title: "Invalid time", description: "Schedule time must be in the future.", variant: "destructive" });
                  }

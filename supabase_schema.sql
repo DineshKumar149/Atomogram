@@ -90,6 +90,11 @@ CREATE TABLE IF NOT EXISTS public.messages (
   view_limit INTEGER DEFAULT 0,
   view_count INTEGER DEFAULT 0,
   viewer_ids JSONB DEFAULT '[]'::jsonb,
+  is_vanishing BOOLEAN DEFAULT false,
+  scheduled_for TIMESTAMPTZ,
+  status TEXT DEFAULT 'published',
+  expires_at TIMESTAMPTZ,
+  is_silent BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
