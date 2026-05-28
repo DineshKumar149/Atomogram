@@ -24,6 +24,7 @@ import { ADMIN_EMAIL } from "@/lib/admin";
 import GroupSettings from "./GroupSettings";
 import UserProfileModal from "@/components/shared/UserProfileModal";
 import CallScreen from "./CallScreen";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Msg {
   id: string;
@@ -71,6 +72,7 @@ const MOCK_STICKERS = [
 const ChatRoom = ({ conversationId, onBack }: { conversationId: string; onBack?: () => void }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   const [profileModalUserId, setProfileModalUserId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -1525,8 +1527,8 @@ const renderText = (text: string) => {
             <div key={m.id} className={`flex gap-2.5 ${isMe ? "justify-end" : "justify-start"} select-none`} style={{ WebkitUserSelect: "none", WebkitTouchCallout: "none" }} onContextMenu={(e) => { e.preventDefault(); if (!isSelectionMode) { setSelectedMessages([m.id]); } else { setSelectedMessages(prev => prev.includes(m.id) ? prev.filter(x => x !== m.id) : [...prev, m.id]); } }}>
               {!isMe && (
                 <Avatar 
-                  className="w-8 h-8 mt-auto shadow-sm cursor-pointer hover:opacity-80 transition-opacity hover:scale-105"
-                  onClick={() => setProfileModalUserId(m.user_id)}
+                  className={`w-8 h-8 mt-auto shadow-sm transition-opacity hover:scale-105 ${isMobile ? "cursor-pointer hover:opacity-80" : ""}`}
+                  onClick={() => { if (isMobile) setProfileModalUserId(m.user_id); }}
                 >
                   {prof?.avatar_url && <AvatarImage src={prof.avatar_url} />}
                   <AvatarFallback className="text-[11px] font-semibold">{(prof?.display_name ?? "?").slice(0, 2).toUpperCase()}</AvatarFallback>
@@ -1535,8 +1537,8 @@ const renderText = (text: string) => {
               <div className={`max-w-[75%] group flex flex-col ${isMe ? "items-end" : "items-start"}`}>
                 {!isMe && (
                   <div 
-                    className="text-[11px] text-muted-foreground mb-1 ml-1 font-medium cursor-pointer hover:underline decoration-primary"
-                    onClick={() => setProfileModalUserId(m.user_id)}
+                    className={`text-[11px] text-muted-foreground mb-1 ml-1 font-medium ${isMobile ? "cursor-pointer hover:underline decoration-primary" : ""}`}
+                    onClick={() => { if (isMobile) setProfileModalUserId(m.user_id); }}
                   >
                     {prof?.display_name ?? "Member"}
                   </div>
