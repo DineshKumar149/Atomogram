@@ -499,11 +499,11 @@ const Profile = () => {
   };
 
   return (
-    <div className="flex-1 w-full min-h-[100dvh] relative font-sans pb-mobile-nav pt-[44px] md:pt-0">
+    <div className="flex-1 w-full min-h-[100dvh] relative font-sans pb-mobile-nav">
       <div className="fixed inset-0 -z-10 bg-background" />
 
       {/* --- MOBILE TOP NAVBAR --- */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-[44px] bg-background/95 backdrop-blur z-50 flex items-center justify-between px-4 border-b border-border/50">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-[40px] bg-background/60 backdrop-blur-lg z-50 flex items-center justify-between px-4 border-b border-border/20">
         <div className="flex items-center gap-2">
           {!isOwnProfile && (
             <button onClick={() => navigate(-1)} className="p-1 -ml-1">
@@ -518,9 +518,6 @@ const Profile = () => {
         <div className="flex items-center gap-4">
           {isOwnProfile ? (
             <>
-              <button onClick={() => postFileInputRef.current?.click()} className="active:scale-90 transition-transform">
-                <Plus className="w-6 h-6" />
-              </button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="active:scale-90 transition-transform outline-none"><Menu className="w-7 h-7" /></button>
@@ -606,7 +603,7 @@ const Profile = () => {
                 <button
                   onClick={() => coverInputRef.current?.click()}
                   disabled={coverUploading}
-                  className="absolute top-14 md:top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-colors text-white"
+                  className="hidden md:flex absolute top-4 right-4 w-9 h-9 items-center justify-center rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-colors text-white"
                 >
                   {coverUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
                 </button>
